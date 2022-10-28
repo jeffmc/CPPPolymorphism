@@ -33,18 +33,21 @@ const char* getMediaTypeStr(const MediaType &mt) {
 }
 #undef CASERET
 
-const char* COL_NAMES[7] = {"Type", "Title", "Year", "Creator", "Rating", "Duration", "Publisher" };
-const int COL_WIDTH[7] = { 12, 20, 4, 20, 6, 9, 20 };
-const bool COL_ENABLED[7] = { true, true, true, true, true, true, true };
+const int COL_CT = 7;
+const bool COL_LA[COL_CT]     = {false, false, false, true, false, false, true };
+const char* COL_NAMES[COL_CT] = {"Type", "Title", "Year", "Creator", "Rating", "Duration", "Publisher" };
+const int COL_WIDTH[COL_CT] = { 12, 20, 4, 20, 6, 9, 20 };
+const bool COL_ENABLED[COL_CT] = { false, true, true, true, true, true, true };
 
-#define COL_EXP(idx) COL_WIDTH[idx], COL_WIDTH[idx], COL_NAMES[idx]
 void printHeader() {
-	printf("%*.*s %*.*s %*.*s %*.*s %*.*s %*.*s %*.*s\n",
-		COL_EXP(0),COL_EXP(1),COL_EXP(2),COL_EXP(3),
-		COL_EXP(4),COL_EXP(5),COL_EXP(6));
+	printf("|");
+	for (int i=0;i<COL_CT;i++) {
+		if (COL_ENABLED[i]) {
+			printf(COL_LA[i] ? "%-*.*s " : "%*.*s ", COL_WIDTH[i], COL_WIDTH[i], COL_NAMES[i]);
+		}
+	}
+	printf("|\n");
 }
-#undef COL_EXP
-
 
 int main() {
 	std::vector<Media*> medias = makeDefaultMedias();
@@ -60,12 +63,49 @@ int main() {
 		
 		#define CELL_EXP(idx, data) COL_WIDTH[idx], COL_WIDTH[idx], data
 		//      Type  Ttl   Yr  Cr    Rtg   Dur         Pub
-		printf("%*.*s %*.*s %*u %*.*s %*.*f %*u:%*u:%*u %*.*s\n",
-			CELL_EXP(0,mts),CELL_EXP(1,mptr->getTitle()),COL_WIDTH[2], *(mptr->getYear()),
-			CELL_EXP(3,mptr->getCreator()), COL_WIDTH[4], 1, *(mptr->getRating()),
-			3, mptr->getDuration()->hours,2, mptr->getDuration()->mins,2, mptr->getDuration()->secs,
-			CELL_EXP(6,mptr->getPublisher()));
-			
+		printf("|");
+		if (COL_ENABLED[0]) {
+			printf("%*.*s ", COL_WIDTH[0], COL_WIDTH[0], mts);
+		}
+		if (COL_ENABLED[1]) {
+			printf("%*.*s ", COL_WIDTH[1], COL_WIDTH[1], mptr->getTitle());
+		}
+		if (COL_ENABLED[2]) {
+			printf("%*u ", COL_WIDTH[2], *(mptr->getYear()));
+		}
+		if (COL_ENABLED[3]) {
+			const char* str = mptr->getCreator();
+			if (str != nullptr) {
+				printf("%-*.*s ", COL_WIDTH[3], COL_WIDTH[3], str);
+			} else {
+				printf("%*c ", COL_WIDTH[3], ' ');
+			}
+		}
+		if (COL_ENABLED[4]) {
+			const float* rat = mptr->getRating();
+			if (rat != nullptr) {
+				printf("%*.*f ", COL_WIDTH[4], 1, *rat);
+			} else {
+				printf("%*c ", COL_WIDTH[4], ' ');
+			}
+		}
+		if (COL_ENABLED[5]) {
+			const Duration* dur = mptr->getDuration();
+			if (dur != nullptr) {
+				printf("%*u:%0*u:%0*u ", 3, dur->hours, 2, dur->mins, 2, dur->secs);
+			} else {
+				printf("%*c ", COL_WIDTH[5], ' ');
+			}
+		}
+		if (COL_ENABLED[6]) {
+			const char* pub = mptr->getPublisher();
+			if (pub != nullptr) {
+				printf("%-*.*s ", COL_WIDTH[6], COL_WIDTH[6], pub);
+			} else {
+				printf("%*c ", COL_WIDTH[6], ' ');
+			}
+		}
+		printf("|\n");
 	}
 
 	return 0;
