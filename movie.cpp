@@ -25,3 +25,7 @@ void Movie::printHeader() {
 		COL_WIDTH[1], "Duration",
 		COL_WIDTH[2], "Rating");	
 }
+
+const float* Movie::getRating() const { return &rating; }
+const Duration* Movie::getDuration() const { return &duration; }
+const char* Movie::getCreator() const { return director; }

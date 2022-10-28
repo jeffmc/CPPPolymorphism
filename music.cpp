@@ -28,3 +28,7 @@ void Music::printHeader() {
 		COL_WIDTH[1], "Publisher",
 		COL_WIDTH[2], "Duration");	
 }
+
+const Duration* Music::getDuration() const { return &duration; }
+const char* Music::getCreator() const { return artist; }
+const char* Music::getPublisher() const { return publisher; }

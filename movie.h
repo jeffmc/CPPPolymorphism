@@ -1,3 +1,4 @@
+#pragma once
 #include "media.h"
 
 class Movie : public Media {
@@ -12,4 +13,7 @@ class Movie : public Media {
 		~Movie();
 		void print() const override;
 		static void printHeader();
+		const float* getRating() const override;
+		const Duration* getDuration() const override;
+		const char* getCreator() const override;
 };

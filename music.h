@@ -1,3 +1,4 @@
+#pragma once
 #include "media.h"
 
 class Music : public Media {
@@ -12,4 +13,8 @@ class Music : public Media {
 		~Music();
 		void print() const override;
 		static void printHeader();
+
+		const Duration* getDuration() const override;
+		const char* getCreator() const override;
+		const char* getPublisher() const override;
 };

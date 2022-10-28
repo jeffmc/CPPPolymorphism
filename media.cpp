@@ -17,3 +17,11 @@ void Media::printHeader() {
 		COL_WIDTH[0], "Title",
 		COL_WIDTH[1], "Year");
 }
+
+const char* Media::getTitle() const { return title; }
+const uint* Media::getYear() const { return &year; }
+
+const float* Media::getRating() const { return nullptr; }
+const Duration* Media::getDuration() const { return nullptr; }
+const char* Media::getCreator() const { return nullptr; }
+const char* Media::getPublisher() const { return nullptr; }

@@ -16,4 +16,12 @@ class Media { // TITLE / YEAR
 		virtual ~Media();
 		virtual void print() const; 
 		static void printHeader();
+
+		const char* getTitle() const;
+		const uint* getYear() const;
+
+		virtual const float* getRating() const;
+		virtual const Duration* getDuration() const;
+		virtual const char* getCreator() const;
+		virtual const char* getPublisher() const;
 };

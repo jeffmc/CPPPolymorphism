@@ -16,9 +16,13 @@ void Videogame::print() const {
 		COL_WIDTH[1], this->rating);
 	
 }
+
 void Videogame::printHeader() {
 	Media::printHeader();
 	printf("%*s %*s ",
 		COL_WIDTH[0], "Publisher",
 		COL_WIDTH[1], "Rating");	
 }
+
+const float* Videogame::getRating() const { return &rating; }
+const char* Videogame::getPublisher() const { return publisher; }
