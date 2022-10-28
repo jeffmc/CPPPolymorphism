@@ -2,10 +2,14 @@
 
 class Music : public Media {
 	private:
-		char* artist, *publisher;
+		char *artist, *publisher;
 		Duration duration;
+		constexpr static int COL_WIDTH[3] = { 20, 20, 9 };
+
 	public:
 		Music(const_cstr& title, const uint& year,
-			const_cstr& artist, const Duration& duration, const_cstr& publisher);
+			const_cstr& artist, const_cstr& publisher, const Duration& duration);
 		~Music();
+		void print() const override;
+		static void printHeader();
 };
