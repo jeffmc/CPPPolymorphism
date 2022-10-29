@@ -49,8 +49,42 @@ void printHeader() {
 	printf("|\n");
 }
 
+
+int Duration::cmp(const Duration &a, const Duration &b) {
+	int hd = a.hours - b.hours;
+	if (hd != 0) return hd;
+	int md = a.mins - b.mins;
+	if (md != 0) return md;
+	return a.secs - b.secs;
+}
+template<typename T>
+void vecswap(std::vector<T> &v, const size_t a, const size_t b) {
+	T tmp = v[a];
+	v[a] = v[b];
+	v[b] = tmp;	
+};
+void sort(std::vector<Media*> &medias) {	
+	size_t n = medias.size();
+	bool swapped = true;
+	size_t swaps = 0;
+	while (swapped) {
+		swapped = false;
+		for (int i=1;i<n;i++) {
+			if (Media::cmp(Media::Var::Title, medias[i-1], medias[i])>0) {
+				vecswap<Media*>(medias, i-1,i);
+				swapped = true;
+				swaps++;
+			}
+		}
+	}
+ 	printf("Using %u swaps, sorted by: \n", swaps);
+}
+
+
 int main() {
 	std::vector<Media*> medias = makeDefaultMedias();
+	
+	sort(medias);
 
 	printf("Media Count: %i\n\n", medias.size());
 	printHeader();

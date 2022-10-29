@@ -12,6 +12,7 @@ struct Duration {
 	uchar secs; // 0-23, 0-59, 0-59
 	Duration(uchar hours, uchar mins, uchar secs)
 		: hours(hours), mins(mins), secs(secs) { };
+	static int cmp(const Duration &a, const Duration &b);
 };
 struct Date {
 	unsigned long year; //0-infinity (sorry BC)
