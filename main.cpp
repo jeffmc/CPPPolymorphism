@@ -39,7 +39,7 @@ const char* getMediaTypeStr(const MediaType &mt) {
 #undef CASERET
 struct TableState {
 public:
-	const int COL_CT = 7;
+	static const int COL_CT = 7;
 	const bool COL_LA[COL_CT]     = {false, false, false, true, false, false, true };
 	std::string COL_NAMES[COL_CT] = {"Type", "Title", "Year", "Creator", "Rating", "Duration", "Publisher" };
 	const Media::Var COL_VARS[COL_CT] = { Media::Var::Type, Media::Var::Title, Media::Var::Year,
