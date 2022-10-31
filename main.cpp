@@ -5,11 +5,17 @@
 #include <vector>
 #include <cstdio>
 #include <cstdlib>
+#include <cctype>
+
+#include <unordered_map>
+#include <string> // For command input/output
 
 #include "media.h"
 #include "videogame.h"
 #include "movie.h"
 #include "music.h"
+
+#include "command.h"
 
 #include "default.h"
 
@@ -36,17 +42,36 @@ const char* getMediaTypeStr(const MediaType &mt) {
 const int COL_CT = 7;
 const bool COL_LA[COL_CT]     = {false, false, false, true, false, false, true };
 const char* COL_NAMES[COL_CT] = {"Type", "Title", "Year", "Creator", "Rating", "Duration", "Publisher" };
+const Media::Var COL_VARS[COL_CT] = { Media::Var::Type, Media::Var::Title, Media::Var::Year,
+	 Media::Var::Creator, Media::Var::Rating, Media::Var::Duration, Media::Var::Publisher };
 const int COL_WIDTH[COL_CT] = { 12, 20, 4, 20, 6, 9, 20 };
 const bool COL_ENABLED[COL_CT] = { false, true, true, true, true, true, true };
 
+Media::Var getMediaVarFromStr(const char* rawstr) {
+	auto lowercase = [](char* s) {
+		while (*s != '\0') {
+			*(s++) = tolower(*s);
+		}
+	};
+	char str[strlen(rawstr)+1];
+	strcpy(str, rawstr);
+	lowercase(str);
+	char lowered[128] = {}; // Column names hopefully aren't longer than 127 characters.
+	for (int i=0;i<COL_CT;i++) {
+		strcpy(lowered, COL_NAMES[i]);
+		lowercase(lowered);
+		if (strcmp(lowered, str)) return COL_VARS[i];		
+	}
+	return Media::Var::NotFound;
+}
+
 void printHeader() {
-	printf("|");
 	for (int i=0;i<COL_CT;i++) {
 		if (COL_ENABLED[i]) {
 			printf(COL_LA[i] ? "%-*.*s " : "%*.*s ", COL_WIDTH[i], COL_WIDTH[i], COL_NAMES[i]);
 		}
 	}
-	printf("|\n");
+	printf("\n");
 }
 
 
@@ -80,30 +105,22 @@ void sort(std::vector<Media*> &medias) {
  	printf("Using %u swaps, sorted by: \n", swaps);
 }
 
+void CmdSize(bool &running, std::vector<Media*>& medias, const CommandBuf& cb) {	
+	printf("Media Count: %i\n", medias.size());
+}
 
-int main() {
-	std::vector<Media*> medias = makeDefaultMedias();
-	
-	sort(medias);
-
-	printf("Media Count: %i\n\n", medias.size());
+void CmdPrint(bool &running, std::vector<Media*>& medias, const CommandBuf& cb) {	
 	printHeader();
 	
-	for (std::vector<Media*>::iterator it = medias.begin();it!=medias.end();++it)
+	for (auto it = medias.cbegin();it!=medias.cend();++it)
 	{
 		Media* mptr = *it;
 		MediaType mt = getType(mptr);
 		const char* mts = getMediaTypeStr(mt);
-		
-		#define CELL_EXP(idx, data) COL_WIDTH[idx], COL_WIDTH[idx], data
-		//      Type  Ttl   Yr  Cr    Rtg   Dur         Pub
-		printf("|");
-		if (COL_ENABLED[0]) {
-			printf("%*.*s ", COL_WIDTH[0], COL_WIDTH[0], mts);
-		}
-		if (COL_ENABLED[1]) {
-			printf("%*.*s ", COL_WIDTH[1], COL_WIDTH[1], mptr->getTitle());
-		}
+	
+		#define STR_COL(idx, cptr) if (COL_ENABLED[idx]) printf("%*.*s ", COL_WIDTH[idx], COL_WIDTH[idx], cptr);	
+		STR_COL(0, mts);
+		STR_COL(1, mptr->getTitle());
 		if (COL_ENABLED[2]) {
 			printf("%*u ", COL_WIDTH[2], *(mptr->getYear()));
 		}
@@ -139,8 +156,59 @@ int main() {
 				printf("%*c ", COL_WIDTH[6], ' ');
 			}
 		}
-		printf("|\n");
+		printf("\n");
 	}
+}
+
+void CmdQuit(bool &running, std::vector<Media*>& medias, const CommandBuf& cb) {
+	printf("Quit!\n");
+	running = false;
+}
+
+void CmdHelp(bool &running, std::vector<Media*>& medias, const CommandBuf& cb);
+
+using CommandFunc = void(*)(bool&, std::vector<Media*>&, const CommandBuf&);
+
+const std::unordered_map<std::string, CommandFunc> cmd_map = {
+	{ "quit", CmdQuit },
+	{ "print", CmdPrint },
+	{ "size", CmdSize },
+	{ "help", CmdHelp }
+};
+
+void CmdHelp(bool &running, std::vector<Media*>& medias, const CommandBuf& cb) {
+	const char* const prefix = "	";
+	printf("Help:\n");
+	for (auto it = cmd_map.cbegin();it!=cmd_map.cend();++it) {
+		printf("%s%s\n",prefix,it->first.c_str());
+	}
+}
+
+std::string tolowercase(const std::string& old) {
+	std::string lowered = old;
+	for (auto it=lowered.begin();it!=lowered.end();++it) {
+		*it = std::tolower(*it);
+	}
+	return lowered;
+}
+
+const char* const ADDITARGS = "doesn't take additional arguments!";
+int main() {
+	std::vector<Media*> medias = makeDefaultMedias();
+	CommandBuf cb;	
+
+	sort(medias);
+	bool running = true;
+	while (running) {
+		printf("Running!\n");
+		cb("> ");
+		if (cb.Tokens() < 1) continue;
+		std::string cmd = tolowercase(cb.GetToken(0));
+		try {
+			CommandFunc func = cmd_map.at(cmd);
+			func(running,medias,cb);
+		} catch (...) { printf("Error encountered!\n"); }	
+	}	
 
 	return 0;
 }

@@ -9,20 +9,6 @@ Videogame::Videogame(const_cstr& title, const uint& year,
 Videogame::~Videogame() {
 	delete[] this->publisher;
 }
-void Videogame::print() const {
-	this->Media::print();
-	printf("%*s %*g ", 
-		COL_WIDTH[0], this->publisher,
-		COL_WIDTH[1], this->rating);
-	
-}
-
-void Videogame::printHeader() {
-	Media::printHeader();
-	printf("%*s %*s ",
-		COL_WIDTH[0], "Publisher",
-		COL_WIDTH[1], "Rating");	
-}
 
 const float* Videogame::getRating() const { return &rating; }
 const char* Videogame::getPublisher() const { return publisher; }

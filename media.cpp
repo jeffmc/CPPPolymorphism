@@ -8,25 +8,19 @@ Media::Media(const_cstr& title, const uint& year) {
 Media::~Media() {
 	delete[] this->title;
 }
-void Media::print() const {
-	printf("%*s %*i ", 
-		COL_WIDTH[0], this->title,
-		COL_WIDTH[1], this->year);
-}
-void Media::printHeader() {
-	printf("%*s %*s ", 
-		COL_WIDTH[0], "Title",
-		COL_WIDTH[1], "Year");
-}
 
 int Media::cmp(const Media::Var v, const Media* a, const Media* b) {
+	const char *as, *bs;
+	const float *ar, *br;
+	const Duration *ad, *bd; 
 	switch (v) {
-	case Title:
+	case Var::Title:
 		return strcmp(a->title, b->title);
-	case Year:
+	case Var::Year:
 		return a->year - b->year;
-	case Rating:
-		const float *ar = a->getRating(), *br = b->getRating();
+	case Var::Rating:
+		ar = a->getRating();
+		br = b->getRating();
 		if (ar && br) {
 			const float diff = *ar - *br;
 			if (diff == 0) return 0;
@@ -36,17 +30,19 @@ int Media::cmp(const Media::Var v, const Media* a, const Media* b) {
 			return (ar==nullptr)?1:-1;
 		}
 		break;
-	case Duration:
-		const Duration *ad = a->getDuration(), *bd = b->getDuration();
-		if (ar && br) {
+	case Var::Duration:
+		ad = a->getDuration();
+		bd = b->getDuration();
+		if (ad && bd) {
 			return Duration::cmp(*ad, *bd);
 		} else {
 			if (ad==nullptr&&bd==nullptr) return 0;
 			return (ad==nullptr)?1:-1;
 		}
 		break;
-	case Creator:
-		const char *as = a->getCreator(), *bs = b->getCreator();
+	case Var::Creator:
+		as = a->getCreator();
+		bs = b->getCreator();
 		if (as && bs) {
 			return strcmp(as,bs);
 		} else {
@@ -54,8 +50,9 @@ int Media::cmp(const Media::Var v, const Media* a, const Media* b) {
 			return (as==nullptr)?1:-1;
 		}
 		break;
-	case Publisher:
-		const char *as = a->getPublisher(), *bs = b->getPublisher();
+	case Var::Publisher:
+		as = a->getPublisher();
+		bs = b->getPublisher();
 		if (as && bs) {
 			return strcmp(as,bs);
 		} else {
@@ -63,8 +60,8 @@ int Media::cmp(const Media::Var v, const Media* a, const Media* b) {
 			return (as==nullptr)?1:-1;
 		}
 		break;
-	default: return 0;
 	}
+	return 0;
 }
 
 const char* Media::getTitle() const { return title; }
