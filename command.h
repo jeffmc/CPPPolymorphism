@@ -12,6 +12,6 @@ public:
 	
 	void operator()(const char* prefix); // Get command from buffer using specified prefix
 	
-	void printdbg() const;
+	//void printdbg() const;
 	void printtkns() const;
 };

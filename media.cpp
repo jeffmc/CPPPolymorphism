@@ -1,4 +1,7 @@
 #include <cstring>
+#include <string>
+#include <unordered_map>
+
 #include "media.h"
 
 Media::Media(const_cstr& title, const uint& year) {
@@ -7,6 +10,27 @@ Media::Media(const_cstr& title, const uint& year) {
 }
 Media::~Media() {
 	delete[] this->title;
+}
+
+const std::unordered_map<std::string, Media::Var>& Media::getStrVarMap() {
+	static std::unordered_map<std::string, Var> str_var_map = {
+		{ "type", Media::Var::Type },
+		{ "title", Media::Var::Title },
+		{ "year", Media::Var::Year },
+		{ "rating", Media::Var::Rating },
+		{ "duration", Media::Var::Duration },
+		{ "creator", Media::Var::Creator },
+		{ "publisher", Media::Var::Publisher },
+	};
+	return str_var_map;
+};
+
+Media::Var Media::getVar(const std::string& key) {
+	try {
+		Media::Var found = Media::getStrVarMap().at(key);
+		return found;
+	} catch (...) { }
+	return Media::Var::NotFound;		
 }
 
 int Media::cmp(const Media::Var v, const Media* a, const Media* b) {

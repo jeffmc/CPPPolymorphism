@@ -1,4 +1,7 @@
 #pragma once
+#include <unordered_map>
+#include <string>
+
 #include "types.h"
 
 enum class MediaType {
@@ -15,6 +18,9 @@ class Media { // TITLE / YEAR
 		virtual ~Media();
 		
 		enum class Var { Type, Title, Year, Rating, Duration, Creator, Publisher, NotFound };
+		static const std::unordered_map<std::string, Var>& getStrVarMap();
+		static Var getVar(const std::string& key);
+		
 		static int cmp(const Var v, const Media* a, const Media* b);
 
 		const char* getTitle() const;

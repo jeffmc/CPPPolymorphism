@@ -28,7 +28,7 @@ void CommandBuf::operator()(const char* prefix) {
 		x = m_Raw.find_first_not_of(whitespace,y);
 	}
 }
-
+/* // Comment out to hide compiler warnings, and its not really used.
 void CommandBuf::printdbg() const {
 	static const char* const INDENT = "	";
 
@@ -46,7 +46,7 @@ void CommandBuf::printdbg() const {
 	printf("%sVector(%u): %p-%p\n",
 		INDENT, vsz, vptr, vptr+vsz-1);
 }
-
+*/
 void CommandBuf::printtkns() const {
 	printf("Raw: \"%s\"\n", m_Raw.c_str());
 	for (auto it = m_Tokens.cbegin(); it != m_Tokens.cend(); ++it) {
