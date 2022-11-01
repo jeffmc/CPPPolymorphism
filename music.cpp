@@ -15,3 +15,9 @@ Music::~Music() {
 const Duration* Music::getDuration() const { return &duration; }
 const char* Music::getCreator() const { return artist; }
 const char* Music::getPublisher() const { return publisher; }
+
+bool Music::search(const char* key) const {
+	return Media::search(key) 
+		|| strstr(artist,key)
+		|| strstr(publisher,key);
+} 

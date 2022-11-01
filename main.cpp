@@ -6,6 +6,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cctype>
+#include <algorithm>
 
 #include <unordered_map> // Pair command keyword with its function pointer.
 #include <string> // For command input/output
@@ -72,6 +73,55 @@ void vecswap(std::vector<T> &v, const size_t a, const size_t b) {
 	v[b] = tmp;	
 };
 
+void printMedias(const TableState& ts, const std::vector<Media*> &medias) {
+	for (auto it = medias.cbegin();it!=medias.cend();++it)
+	{
+		Media* mptr = *it;
+		MediaType mt = getType(mptr);
+		const char* mts = getMediaTypeStr(mt);
+	
+		#define STR_COL(idx, cptr) if (ts.COL_ENABLED[idx]) printf("%*.*s ", ts.COL_WIDTH[idx], ts.COL_WIDTH[idx], cptr);	
+		STR_COL(0, mts);
+		STR_COL(1, mptr->getTitle());
+		if (ts.COL_ENABLED[2]) {
+			printf("%*u ", ts.COL_WIDTH[2], *(mptr->getYear()));
+		}
+		if (ts.COL_ENABLED[3]) {
+			const char* str = mptr->getCreator();
+			if (str != nullptr) {
+				printf("%-*.*s ", ts.COL_WIDTH[3], ts.COL_WIDTH[3], str);
+			} else {
+				printf("%*c ", ts.COL_WIDTH[3], ' ');
+			}
+		}
+		if (ts.COL_ENABLED[4]) {
+			const float* rat = mptr->getRating();
+			if (rat != nullptr) {
+				printf("%*.*f ", ts.COL_WIDTH[4], 1, *rat);
+			} else {
+				printf("%*c ", ts.COL_WIDTH[4], ' ');
+			}
+		}
+		if (ts.COL_ENABLED[5]) {
+			const Duration* dur = mptr->getDuration();
+			if (dur != nullptr) {
+				printf("%*u:%0*u:%0*u ", 3, dur->hours, 2, dur->mins, 2, dur->secs);
+			} else {
+				printf("%*c ", ts.COL_WIDTH[5], ' ');
+			}
+		}
+		if (ts.COL_ENABLED[6]) {
+			const char* pub = mptr->getPublisher();
+			if (pub != nullptr) {
+				printf("%-*.*s ", ts.COL_WIDTH[6], ts.COL_WIDTH[6], pub);
+			} else {
+				printf("%*c ", ts.COL_WIDTH[6], ' ');
+			}
+		}
+		printf("\n");
+	}
+}
+
 // Commands
 
 struct ProgState {
@@ -113,55 +163,23 @@ void CmdSize(ProgState& ps) {
 	printf("Media Count: %i\n", ps.medias.size());
 }
 
+void CmdSearch(ProgState& ps) {
+	if (ps.cb.Tokens() < 2) {
+		printf("Need a search token!\n");
+		return;
+	}	
+	const char* key = ps.cb.GetToken(1);
+	std::vector<Media*> filtered;
+	std::copy_if(ps.medias.begin(), ps.medias.end(), std::back_inserter(filtered), 
+		[key](Media* m) { return m->search(key); });
+	printHeader(ps.ts);
+	printMedias(ps.ts, filtered);	
+	printf("\nFilter to %u results: \"%s\"\n", filtered.size(), key);
+}
+
 void CmdPrint(ProgState& ps) {	
 	printHeader(ps.ts);
-	
-	for (auto it = ps.medias.cbegin();it!=ps.medias.cend();++it)
-	{
-		Media* mptr = *it;
-		MediaType mt = getType(mptr);
-		const char* mts = getMediaTypeStr(mt);
-	
-		#define STR_COL(idx, cptr) if (ps.ts.COL_ENABLED[idx]) printf("%*.*s ", ps.ts.COL_WIDTH[idx], ps.ts.COL_WIDTH[idx], cptr);	
-		STR_COL(0, mts);
-		STR_COL(1, mptr->getTitle());
-		if (ps.ts.COL_ENABLED[2]) {
-			printf("%*u ", ps.ts.COL_WIDTH[2], *(mptr->getYear()));
-		}
-		if (ps.ts.COL_ENABLED[3]) {
-			const char* str = mptr->getCreator();
-			if (str != nullptr) {
-				printf("%-*.*s ", ps.ts.COL_WIDTH[3], ps.ts.COL_WIDTH[3], str);
-			} else {
-				printf("%*c ", ps.ts.COL_WIDTH[3], ' ');
-			}
-		}
-		if (ps.ts.COL_ENABLED[4]) {
-			const float* rat = mptr->getRating();
-			if (rat != nullptr) {
-				printf("%*.*f ", ps.ts.COL_WIDTH[4], 1, *rat);
-			} else {
-				printf("%*c ", ps.ts.COL_WIDTH[4], ' ');
-			}
-		}
-		if (ps.ts.COL_ENABLED[5]) {
-			const Duration* dur = mptr->getDuration();
-			if (dur != nullptr) {
-				printf("%*u:%0*u:%0*u ", 3, dur->hours, 2, dur->mins, 2, dur->secs);
-			} else {
-				printf("%*c ", ps.ts.COL_WIDTH[5], ' ');
-			}
-		}
-		if (ps.ts.COL_ENABLED[6]) {
-			const char* pub = mptr->getPublisher();
-			if (pub != nullptr) {
-				printf("%-*.*s ", ps.ts.COL_WIDTH[6], ps.ts.COL_WIDTH[6], pub);
-			} else {
-				printf("%*c ", ps.ts.COL_WIDTH[6], ' ');
-			}
-		}
-		printf("\n");
-	}
+	printMedias(ps.ts, ps.medias);
 }
 
 void CmdQuit(ProgState& ps) {
@@ -179,6 +197,7 @@ const std::unordered_map<std::string, CommandFunc> cmd_map = {
 	{ "size", CmdSize },
 	{ "help", CmdHelp },
 	{ "sort", CmdSort },
+	{ "search", CmdSearch }
 };
 
 void CmdHelp(ProgState& ps) {
@@ -196,7 +215,6 @@ std::string tolowercase(const std::string& old) {
 	}
 	return lowered;
 }
-
 
 const char* const ADDITARGS = "doesn't take additional arguments!";
 int main() {

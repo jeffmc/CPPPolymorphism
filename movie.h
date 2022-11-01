@@ -14,4 +14,6 @@ public:
 	const float* getRating() const override;
 	const Duration* getDuration() const override;
 	const char* getCreator() const override;
+	
+	bool search(const char*) const override;
 };

@@ -95,3 +95,7 @@ const float* Media::getRating() const { return nullptr; }
 const Duration* Media::getDuration() const { return nullptr; }
 const char* Media::getCreator() const { return nullptr; }
 const char* Media::getPublisher() const { return nullptr; }
+
+bool Media::search(const char* key) const {
+	return strstr(title,key) || atoi(key) == year;	
+};

@@ -13,3 +13,9 @@ Movie::~Movie() {
 const float* Movie::getRating() const { return &rating; }
 const Duration* Movie::getDuration() const { return &duration; }
 const char* Movie::getCreator() const { return director; }
+
+bool Movie::search(const char* key) const {
+	return Media::search(key) 
+		|| strstr(director, key)
+		|| strtof(key, nullptr) == rating;
+} 
