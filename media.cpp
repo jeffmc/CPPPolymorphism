@@ -12,6 +12,22 @@ Media::~Media() {
 	delete[] this->title;
 }
 
+const std::unordered_map<std::string, MediaType>& Media::getStrTypeMap() {
+	static std::unordered_map<std::string, MediaType> str_type_map = {
+		{ "videogame", MediaType::Videogame },
+		{ "music", MediaType::Music },
+		{ "movie", MediaType::Movie },
+	};
+	return str_type_map;
+};
+
+MediaType Media::getType(const std::string& key) {
+	try {
+		MediaType found = Media::getStrTypeMap().at(key);
+		return found;
+	} catch (...) { }
+	return MediaType::UnknownType;		
+}
 const std::unordered_map<std::string, Media::Var>& Media::getStrVarMap() {
 	static std::unordered_map<std::string, Var> str_var_map = {
 		{ "type", Media::Var::Type },

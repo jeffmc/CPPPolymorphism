@@ -17,6 +17,9 @@ public:
 	Media(const_cstr& title, const uint& year);
 	virtual ~Media();
 	
+	static const std::unordered_map<std::string, MediaType>& getStrTypeMap();
+	static Var getType(const std::string& key);
+
 	enum class Var { Type, Title, Year, Rating, Duration, Creator, Publisher, NotFound };
 	static const std::unordered_map<std::string, Var>& getStrVarMap();
 	static Var getVar(const std::string& key);

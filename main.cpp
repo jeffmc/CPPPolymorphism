@@ -128,7 +128,8 @@ struct ProgState {
 	TableState ts;
 	bool running;
 	CommandBuf cb;
-	std::vector<Media*>& medias;
+	const std::vector<Media*>& originals;
+	std::vector<Media*>& medias; // could be a filtered version
 };
 
 void CmdSort(ProgState& ps) {	
@@ -160,21 +161,53 @@ void CmdSort(ProgState& ps) {
 }
 
 void CmdSize(ProgState& ps) {	
-	printf("Media Count: %i\n", ps.medias.size());
+	printf("Total Media Count: %i\n", ps.originals.size());
+	printf("Filtered Media Count: %i\n", ps.medias.size());
 }
 
+// Search within medias (filtered)
 void CmdSearch(ProgState& ps) {
 	if (ps.cb.Tokens() < 2) {
 		printf("Need a search token!\n");
 		return;
 	}	
 	const char* key = ps.cb.GetToken(1);
-	std::vector<Media*> filtered;
-	std::copy_if(ps.medias.begin(), ps.medias.end(), std::back_inserter(filtered), 
+	std::vector<Media*> filtered = ps.medias;
+	std::remove_if(filtered.begin(), filtered.end(), 
 		[key](Media* m) { return m->search(key); });
 	printHeader(ps.ts);
 	printMedias(ps.ts, filtered);	
-	printf("\nFilter to %u results: \"%s\"\n", filtered.size(), key);
+	printf("\"Search of \"%s\"returned %u results\n", key, filtered.size());
+}
+
+void CmdReset(ProgState& ps) {
+	ps.medias = ps.originals;
+	printf("Media filter reset!\n");
+}
+
+void CmdFilter(ProgState& ps) {
+	if (ps.cb.Tokens() < 3) {
+		printf("Need a filter token!\n");
+		return;
+	}
+	const char* var = ps.cb.GetToken(1);
+	if (strcmp(var,"search")==0) {
+		const	st char* key = ps.cb.GetToken(2);
+		std::remove_if(ps.medias.begin(), ps.medias.end(), 
+			[key](Media* m) { return m->search(key); });
+		printHeader(ps.ts);
+		printMedias(ps.ts, ps.medias);	
+		printf("\nFiltered to %u results: \"%s\"\n", filtered.size(), key);
+		return;
+	} else if (strcmp(var,"type")==0) {
+		const	st char* typestr = ps.cb.GetToken(2);
+		std::remove_if(ps.medias.begin(), ps.medias.end(), 
+			[key](Media* m) { return m->search(key); });
+		printHeader(ps.ts);
+		printMedias(ps.ts, ps.medias);	
+		printf("\nFiltered to %u results: \"%s\"\n", filtered.size(), key);
+		return;
+	}
 }
 
 void CmdPrint(ProgState& ps) {	
@@ -222,7 +255,7 @@ int main() {
 	std::vector<Media*> medias = full;
 
 	ProgState ps = {
-		TableState(), true, CommandBuf(), medias
+		TableState(), true, CommandBuf(), full, medias
 	};
 
 	while (ps.running) {
