@@ -1,26 +1,26 @@
 // Jeff McMillan 10-21-2022
 // CPP Classes assignment
 
-#include <iostream>
-#include <vector>
-#include <cstdio>
-#include <cstdlib>
-#include <cctype>
-#include <algorithm>
+#include <iostream> // console interaction
+#include <vector> // storing media pointers
+#include <cstdio> // lots
+#include <cstdlib> // lots
+#include <cctype> // Lowercasing
+#include <algorithm> // Manipulation of vectors
 
 #include <unordered_map> // Pair command keyword with its function pointer.
-#include <string> // For command input/output
+#include <string> // For command input/output, detecting keywords
 
-#include "media.h" // Media types
-#include "videogame.h"
-#include "movie.h"
-#include "music.h"
+#include "media.h" // Media definitions 
+#include "videogame.h" // Publisher and rating
+#include "movie.h" // Creator, duration and rating 
+#include "music.h" // Creator, durating and publisher
 
 #include "command.h" // Command buffer, all interaction with console input, and tokenization of the input string.
 #include "default.h" // default data
 
 #define TRYRET(PTR, MTYPE) try { MTYPE* tp = dynamic_cast<MTYPE*>(PTR); if (tp!=0) return MediaType::MTYPE; } catch (...) {}
-MediaType getType(Media* m) {
+MediaType getMediaTypeFromPtr(Media* m) {
 	TRYRET(m, Videogame);
 	TRYRET(m, Movie);
 	TRYRET(m, Music);
@@ -77,7 +77,7 @@ void printMedias(const TableState& ts, const std::vector<Media*> &medias) {
 	for (auto it = medias.cbegin();it!=medias.cend();++it)
 	{
 		Media* mptr = *it;
-		MediaType mt = getType(mptr);
+		MediaType mt = getMediaTypeFromPtr(mptr);
 		const char* mts = getMediaTypeStr(mt);
 	
 		#define STR_COL(idx, cptr) if (ts.COL_ENABLED[idx]) printf("%*.*s ", ts.COL_WIDTH[idx], ts.COL_WIDTH[idx], cptr);	
@@ -177,12 +177,12 @@ void CmdSearch(ProgState& ps) {
 		[key](Media* m) { return m->search(key); });
 	printHeader(ps.ts);
 	printMedias(ps.ts, filtered);	
-	printf("\"Search of \"%s\"returned %u results\n", key, filtered.size());
+	printf("Searching for \"%s\" returned %u results\n", key, filtered.size());
 }
 
 void CmdReset(ProgState& ps) {
 	ps.medias = ps.originals;
-	printf("Media filter reset!\n");
+	printf("Media filter reset to %u elements!\n", ps.medias.size());
 }
 
 void CmdFilter(ProgState& ps) {
@@ -192,22 +192,27 @@ void CmdFilter(ProgState& ps) {
 	}
 	const char* var = ps.cb.GetToken(1);
 	if (strcmp(var,"search")==0) {
-		const	st char* key = ps.cb.GetToken(2);
-		std::remove_if(ps.medias.begin(), ps.medias.end(), 
-			[key](Media* m) { return m->search(key); });
-		printHeader(ps.ts);
-		printMedias(ps.ts, ps.medias);	
-		printf("\nFiltered to %u results: \"%s\"\n", filtered.size(), key);
-		return;
+		const char* key = ps.cb.GetToken(2);
+		auto it = std::remove_if(ps.medias.begin(), ps.medias.end(), // Rearranges non matched to end of vec.
+			[key](Media* m) { return !(m->search(key)); });
+		ps.medias.erase(it, ps.medias.end()); // Erase leftover elements
 	} else if (strcmp(var,"type")==0) {
-		const	st char* typestr = ps.cb.GetToken(2);
-		std::remove_if(ps.medias.begin(), ps.medias.end(), 
-			[key](Media* m) { return m->search(key); });
-		printHeader(ps.ts);
-		printMedias(ps.ts, ps.medias);	
-		printf("\nFiltered to %u results: \"%s\"\n", filtered.size(), key);
+		const char* typestr = ps.cb.GetToken(2);
+		const MediaType type = Media::getType(typestr);
+		if (type == MediaType::UnknownType) {
+			printf("\"%s\" is not a valid media type!", typestr);
+			return;
+		}
+		auto it = std::remove_if(ps.medias.begin(), ps.medias.end(), 
+			[type](Media* m) { return getMediaTypeFromPtr(m) != type; });
+		ps.medias.erase(it, ps.medias.end());
+	} else {
+		printf("\"%s\" not a valid filter variable!", var);
 		return;
 	}
+	//printHeader(ps.ts);
+	//printMedias(ps.ts, ps.medias);	
+	printf("Filtered to %u results: \"%s\" & \"%s\"\n", ps.medias.size(), var, ps.cb.GetToken(2));
 }
 
 void CmdPrint(ProgState& ps) {	
@@ -221,23 +226,38 @@ void CmdQuit(ProgState& ps) {
 }
 
 void CmdHelp(ProgState& ps);
+struct CommandDefinition {
+	using Function = void(*)(ProgState&);
+	const Function func;
+	const std::string args;
+	const std::string help;	
+};
 
-using CommandFunc = void(*)(ProgState&);
-
-const std::unordered_map<std::string, CommandFunc> cmd_map = {
-	{ "quit", CmdQuit },
-	{ "print", CmdPrint },
-	{ "size", CmdSize },
-	{ "help", CmdHelp },
-	{ "sort", CmdSort },
-	{ "search", CmdSearch }
+const std::unordered_map<std::string, CommandDefinition> cmd_map = {
+	{ "quit", { CmdQuit, "", "Ends the program." }},
+	{ "print", { CmdPrint, "", "Lists all the media within the current filter." }},
+	{ "size", { CmdSize, "", "Prints out the size of original media and filtered media groups." }},
+	{ "help", { CmdHelp, "", "this" }},
+	{ "sort", { CmdSort, "[var]", "Sorts the filtered media by the given variable (type, title, year...) (Ascending)" }},
+	{ "search", { CmdSearch, "[keyword]", "Search through filtered media for given keyword." }},
+	{ "filter", { CmdFilter, "[mode] [keyword]",
+		 "Filter the media using the given mode (type, search) and type/keyword pair." }}, 
+	{ "reset", { CmdReset, "", "Resets all filters, back to original data." }},
 };
 
 void CmdHelp(ProgState& ps) {
 	const char* const prefix = "	";
 	printf("Help:\n");
+	size_t maxlen = 0; // strlen(cmd) + 1 + strlen(args)
 	for (auto it = cmd_map.cbegin();it!=cmd_map.cend();++it) {
-		printf("%s%s\n",prefix,it->first.c_str());
+		size_t len = it->first.length() + 1 + it->second.args.length();
+		if (len > maxlen) maxlen = len;
+	}
+	char cmddef[maxlen+1]; // allow for null terminating char
+	for (auto it = cmd_map.cbegin();it!=cmd_map.cend();++it) {
+		const std::string& args = it->second.args;
+		snprintf(cmddef, maxlen+1, args.length()<1 ? "%s":"%s %s", it->first.c_str(), args.c_str());
+		printf("%*s - %s\n", maxlen, cmddef, it->second.help.c_str());
 	}
 }
 
@@ -263,7 +283,7 @@ int main() {
 		if (ps.cb.Tokens() < 1) continue;
 		std::string cmd = tolowercase(ps.cb.GetToken(0));
 		try {
-			CommandFunc func = cmd_map.at(cmd);
+			CommandDefinition::Function func = cmd_map.at(cmd).func;
 			func(ps);
 		} catch (...) { printf("Error encountered!\n"); }	
 	}	

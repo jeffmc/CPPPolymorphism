@@ -67,7 +67,7 @@ int Media::cmp(const Media::Var v, const Media* a, const Media* b) {
 			return diff < 0 ? -1 : 1;
 		} else {
 			if (ar==nullptr&&br==nullptr) return 0;
-			return (ar==nullptr)?1:-1;
+			return (ar==nullptr)?-1:1;
 		}
 		break;
 	case Var::Duration:
@@ -77,7 +77,7 @@ int Media::cmp(const Media::Var v, const Media* a, const Media* b) {
 			return Duration::cmp(*ad, *bd);
 		} else {
 			if (ad==nullptr&&bd==nullptr) return 0;
-			return (ad==nullptr)?1:-1;
+			return (ad==nullptr)?-1:1;
 		}
 		break;
 	case Var::Creator:
@@ -87,7 +87,7 @@ int Media::cmp(const Media::Var v, const Media* a, const Media* b) {
 			return strcmp(as,bs);
 		} else {
 			if (as==nullptr&&bs==nullptr) return 0;
-			return (as==nullptr)?1:-1;
+			return (as==nullptr)?-1:1;
 		}
 		break;
 	case Var::Publisher:
@@ -97,7 +97,7 @@ int Media::cmp(const Media::Var v, const Media* a, const Media* b) {
 			return strcmp(as,bs);
 		} else {
 			if (as==nullptr&&bs==nullptr) return 0;
-			return (as==nullptr)?1:-1;
+			return (as==nullptr)?-1:1;
 		}
 		break;
 	}
