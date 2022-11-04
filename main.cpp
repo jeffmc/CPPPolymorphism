@@ -40,10 +40,11 @@ const char* getMediaTypeStr(const MediaType &mt) {
 #undef CASERET
 struct TableState {
 public:
-	static const int COL_CT = 7;
-	const bool COL_LA[COL_CT]     = {false, false, false, true, false, false, true };
-	std::string COL_NAMES[COL_CT] = {"Type", "Title", "Year", "Creator", "Rating", "Duration", "Publisher" };
-	const Media::Var COL_VARS[COL_CT] = { Media::Var::Type, Media::Var::Title, Media::Var::Year,
+	static constexpr int COL_CT = 7;
+	static constexpr bool COL_LA[COL_CT]     = {false, false, false, true, false, false, true };
+	// TODO: Unify this definition and the names within map in Media::getStrVarMap();
+	static constexpr const char* COL_NAMES[COL_CT] = {"Type", "Title", "Year", "Creator", "Rating", "Duration", "Publisher" };
+	static constexpr Media::Var COL_VARS[COL_CT] = { Media::Var::Type, Media::Var::Title, Media::Var::Year,
 		 Media::Var::Creator, Media::Var::Rating, Media::Var::Duration, Media::Var::Publisher };
 	int COL_WIDTH[COL_CT] = { 25, 25, 4, 25, 6, 9, 25 };
 	bool COL_ENABLED[COL_CT] = { false, true, true, true, true, true, true };
@@ -53,7 +54,7 @@ void printHeader(const TableState& ts) {
 	for (int i=0;i<ts.COL_CT;i++) {
 		if (ts.COL_ENABLED[i]) {
 			printf(ts.COL_LA[i] ? "%-*.*s " : "%*.*s ", 
-				ts.COL_WIDTH[i], ts.COL_WIDTH[i], ts.COL_NAMES[i].c_str());
+				ts.COL_WIDTH[i], ts.COL_WIDTH[i], ts.COL_NAMES[i]);
 		}
 	}
 	printf("\n");
@@ -180,38 +181,41 @@ void CmdSearch(ProgState& ps) {
 	printf("Searching for \"%s\" returned %u results\n", key, filtered.size());
 }
 
-void CmdReset(ProgState& ps) {
-	ps.medias = ps.originals;
-	printf("Media filter reset to %u elements!\n", ps.medias.size());
-}
-
 void CmdFilter(ProgState& ps) {
-	if (ps.cb.Tokens() < 3) {
-		printf("Need a filter token!\n");
+	static const char* const CSVMEDIATYPES = "videogame, movie, music"; 
+	if (ps.cb.Tokens() < 2) {
+		printf("Expected a mode: \"filter [search/type] [...]\"\n");
 		return;
 	}
 	const char* var = ps.cb.GetToken(1);
+	
 	if (strcmp(var,"search")==0) {
+		if (ps.cb.Tokens() < 3) {
+			printf("Expected a search key: \"filter search [key]\"\n");
+			return;
+		}
 		const char* key = ps.cb.GetToken(2);
 		auto it = std::remove_if(ps.medias.begin(), ps.medias.end(), // Rearranges non matched to end of vec.
 			[key](Media* m) { return !(m->search(key)); });
 		ps.medias.erase(it, ps.medias.end()); // Erase leftover elements
 	} else if (strcmp(var,"type")==0) {
+		if (ps.cb.Tokens() < 3) {
+			printf("Expected a type: \"filter search [type]\" (%s)\n", CSVMEDIATYPES);
+			return;
+		}
 		const char* typestr = ps.cb.GetToken(2);
 		const MediaType type = Media::getType(typestr);
 		if (type == MediaType::UnknownType) {
-			printf("\"%s\" is not a valid media type!", typestr);
+			printf("\"%s\" is not a valid media type!\n", typestr);
 			return;
 		}
 		auto it = std::remove_if(ps.medias.begin(), ps.medias.end(), 
 			[type](Media* m) { return getMediaTypeFromPtr(m) != type; });
 		ps.medias.erase(it, ps.medias.end());
 	} else {
-		printf("\"%s\" not a valid filter variable!", var);
+		printf("\"%s\" not a valid filter variable! (%s)\n", var, CSVMEDIATYPES);
 		return;
 	}
-	//printHeader(ps.ts);
-	//printMedias(ps.ts, ps.medias);	
 	printf("Filtered to %u results: \"%s\" & \"%s\"\n", ps.medias.size(), var, ps.cb.GetToken(2));
 }
 
@@ -221,8 +225,84 @@ void CmdPrint(ProgState& ps) {
 }
 
 void CmdQuit(ProgState& ps) {
+	if (ps.cb.Tokens() > 1) {
+		printf("Didn't expect additional arguments!\n");
+		return;
+	}
 	printf("Quit!\n");
 	ps.running = false;
+}
+
+
+void CmdDelete(ProgState& ps) {
+	if (ps.cb.Tokens() < 2) {
+		printf("Expected a key: \"delete [key]\"\n");
+		return;
+	}
+	printf("Unimplemented!\n");	
+	return;	
+}
+
+void CmdAdd(ProgState& ps) {
+	if (ps.cb.Tokens() < 2) {
+		printf("Expected a type: \"add [type]\" (videogame, movie, music)\n");
+		return;
+	} else if (ps.cb.Tokens() > 2) {
+		printf("Unexpected additional tokens!\n");
+		return;
+	}
+	MediaType mt = Media::getType(ps.cb.GetToken(1));
+	if (mt == MediaType::UnknownType) {
+	}	
+
+	Media* mptr;
+	switch (mt) {
+	case MediaType::Videogame:
+		mptr = Videogame::usercreated();
+		break;
+	case MediaType::Movie:
+		mptr = Movie::usercreated();
+		break;
+	case MediaType::Music:
+		mptr = Music::usercreated();
+		break;
+	default:	
+		printf("Couldn't determine \"%s\" as a media type!\n", ps.cb.GetToken(1));
+		return;
+	}
+	printf("Got pointer: %p\n", mptr);
+	delete mptr;
+}
+
+void CmdToggle(ProgState& ps) {
+	if (ps.cb.Tokens() < 2) {
+		printf("Expected a column argument: \" toggle [column]\"\n");
+		return;
+	}
+	const Media::Var mv = Media::getVar(std::string(ps.cb.GetToken(1)));
+	if (mv == Media::Var::NotFound) {
+		printf("\"%s\" is not a known media type!\n", ps.cb.GetToken(1));
+		return;
+	}
+	for (size_t i=0;i<TableState::COL_CT;i++) {
+		if (TableState::COL_VARS[i] == mv) {
+			ps.ts.COL_ENABLED[i] = !ps.ts.COL_ENABLED[i];
+			printf("Toggled visibility of %s!\n", TableState::COL_NAMES);
+			return;
+		}
+	}
+	printf("%s: %s, didn't find what should've been a match!\n", __FILE__, __LINE__);
+} 
+
+void CmdEnableCols(ProgState& ps) {
+	for (size_t i=0;i<TableState::COL_CT;i++) ps.ts.COL_ENABLED[i] = true;
+	printf("All columns visible!\n");
+}
+
+void CmdReset(ProgState& ps) {
+	ps.medias = ps.originals;
+	printf("Media reset to default %u elements!\n", ps.medias.size());
+	CmdEnableCols(ps);
 }
 
 void CmdHelp(ProgState& ps);
@@ -235,14 +315,17 @@ struct CommandDefinition {
 
 const std::unordered_map<std::string, CommandDefinition> cmd_map = {
 	{ "quit", { CmdQuit, "", "Ends the program." }},
-	{ "print", { CmdPrint, "", "Lists all the media within the current filter." }},
-	{ "size", { CmdSize, "", "Prints out the size of original media and filtered media groups." }},
+	{ "print", { CmdPrint, "", "Lists all the media." }},
+	{ "size", { CmdSize, "", "Prints out the size of default media and current media groups." }},
 	{ "help", { CmdHelp, "", "this" }},
-	{ "sort", { CmdSort, "[var]", "Sorts the filtered media by the given variable (type, title, year...) (Ascending)" }},
-	{ "search", { CmdSearch, "[keyword]", "Search through filtered media for given keyword." }},
-	{ "filter", { CmdFilter, "[mode] [keyword]",
-		 "Filter the media using the given mode (type, search) and type/keyword pair." }}, 
-	{ "reset", { CmdReset, "", "Resets all filters, back to original data." }},
+	{ "sort", { CmdSort, "[var]", "Sorts the media by the given variable (type, title, year...) (Ascending)" }},
+	{ "search", { CmdSearch, "[keyword]", "Search through media for given keyword." }},
+	{ "filter", { CmdFilter, "[mode] [keyword]", "Remove media not matching the given filter (type, search) and (type/keyword) pair." }}, 
+	{ "reset", { CmdReset, "", "Resets media back to default. Deletes new entries and restores removed defaults. Also enables visibility of all columns." }},
+	{ "delete", {CmdDelete, "[key]", "Deletes any media entries matching the given key, prompts confirmation." }},
+	{ "add", { CmdAdd, "[type]", "Add media of specified type, will prompt for properties and preview." }}, 
+	{ "toggle", { CmdToggle, "[column]", "Toggle the visibility of specified column."}},
+	{ "enablecols", {CmdEnableCols, "", "Enables visibility of all columns."}},
 };
 
 void CmdHelp(ProgState& ps) {
@@ -269,7 +352,6 @@ std::string tolowercase(const std::string& old) {
 	return lowered;
 }
 
-const char* const ADDITARGS = "doesn't take additional arguments!";
 int main() {
 	const std::vector<Media*> full = makeDefaultMedias();
 	std::vector<Media*> medias = full;

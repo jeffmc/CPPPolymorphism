@@ -10,6 +10,8 @@ public:
 			const_cstr publisher, const float& rating);
 	~Videogame();
 
+	static Videogame* usercreated();
+
 	const float* getRating() const override;
 	const char* getPublisher() const override;
 	

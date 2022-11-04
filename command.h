@@ -10,6 +10,7 @@ public:
 	const char* GetToken(size_t i) const; // return token
 	const size_t Tokens() const; // return number of tokens	
 	
+	std::string GetLine() const; // Get independent line of input from user, has no effect on raw or tokens.
 	void operator()(const char* prefix); // Get command from buffer using specified prefix
 	
 	//void printdbg() const;

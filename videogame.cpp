@@ -18,3 +18,6 @@ bool Videogame::search(const char* key) const {
 		|| strtof(key,nullptr) == rating 
 		|| strstr(publisher,key);
 } 
+Videogame* Videogame::usercreated() {
+	return nullptr;
+}

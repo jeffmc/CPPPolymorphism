@@ -53,3 +53,10 @@ void CommandBuf::printtkns() const {
 		printf("  \"%s\"\n", it->c_str());
 	}
 }
+
+// Was intended for a feature that I decided against, also unnecessarily a non-static member.
+std::string CommandBuf::GetLine() const {
+	std::string line;
+	std::getline(std::cin, line);
+	return line;	
+}

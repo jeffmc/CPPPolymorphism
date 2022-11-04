@@ -21,3 +21,7 @@ bool Music::search(const char* key) const {
 		|| strstr(artist,key)
 		|| strstr(publisher,key);
 } 
+
+Music* Music::usercreated() {
+	return nullptr;
+}

@@ -19,3 +19,6 @@ bool Movie::search(const char* key) const {
 		|| strstr(director, key)
 		|| strtof(key, nullptr) == rating;
 } 
+Movie* Movie::usercreated() {
+	return nullptr;
+}

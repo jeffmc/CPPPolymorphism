@@ -11,6 +11,8 @@ public:
 			const_cstr& director, const Duration& duration, const float& rating);
 	~Movie();
 	
+	static Movie* usercreated();
+	
 	const float* getRating() const override;
 	const Duration* getDuration() const override;
 	const char* getCreator() const override;

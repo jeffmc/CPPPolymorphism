@@ -13,10 +13,10 @@ Media::~Media() {
 }
 
 const std::unordered_map<std::string, MediaType>& Media::getStrTypeMap() {
-	static std::unordered_map<std::string, MediaType> str_type_map = {
+	static const std::unordered_map<std::string, MediaType> str_type_map = {
 		{ "videogame", MediaType::Videogame },
-		{ "music", MediaType::Music },
-		{ "movie", MediaType::Movie },
+		{     "music", MediaType::Music },
+		{     "movie", MediaType::Movie },
 	};
 	return str_type_map;
 };
@@ -30,12 +30,12 @@ MediaType Media::getType(const std::string& key) {
 }
 const std::unordered_map<std::string, Media::Var>& Media::getStrVarMap() {
 	static std::unordered_map<std::string, Var> str_var_map = {
-		{ "type", Media::Var::Type },
-		{ "title", Media::Var::Title },
-		{ "year", Media::Var::Year },
-		{ "rating", Media::Var::Rating },
-		{ "duration", Media::Var::Duration },
-		{ "creator", Media::Var::Creator },
+		{      "type", Media::Var::Type },
+		{     "title", Media::Var::Title },
+		{      "year", Media::Var::Year },
+		{    "rating", Media::Var::Rating },
+		{  "duration", Media::Var::Duration },
+		{   "creator", Media::Var::Creator },
 		{ "publisher", Media::Var::Publisher },
 	};
 	return str_var_map;

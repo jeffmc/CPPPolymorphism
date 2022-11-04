@@ -11,6 +11,8 @@ public:
 		const_cstr& artist, const_cstr& publisher, const Duration& duration);
 	~Music();
 
+	static Music* usercreated();
+
 	const Duration* getDuration() const override;
 	const char* getCreator() const override;
 	const char* getPublisher() const override;
