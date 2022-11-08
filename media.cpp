@@ -9,6 +9,7 @@ Media::Media(const_cstr& title, const uint& year) {
 	this->year = year;
 }
 Media::~Media() {
+	printf("~Media() [%p]\n", this);
 	delete[] this->title;
 }
 

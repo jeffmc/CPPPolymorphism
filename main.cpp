@@ -7,6 +7,7 @@
 #include <cstdlib> // lots
 #include <cctype> // Lowercasing
 #include <algorithm> // Manipulation of vectors
+#include <iterator> // For Media iterators
 
 #include <unordered_map> // Pair command keyword with its function pointer.
 #include <string> // For command input/output, detecting keywords
@@ -26,7 +27,7 @@ MediaType getMediaTypeFromPtr(Media* m) {
 	TRYRET(m, Music);
 	return MediaType::UnknownType;
 }
-#undef TRYRETCATCH
+#undef TRYRET
 #define CASERET(MTYPE) case MediaType::MTYPE: return #MTYPE;
 const char* getMediaTypeStr(const MediaType &mt) {
 	switch (mt) {
@@ -75,8 +76,8 @@ void vecswap(std::vector<T> &v, const size_t a, const size_t b) {
 };
 
 void printMedias(const TableState& ts, const std::vector<Media*> &medias) {
-	for (auto it = medias.cbegin();it!=medias.cend();++it)
-	{
+	for (auto it = medias.cbegin(); it!=medias.cend(); ++it)
+	{	
 		Media* mptr = *it;
 		MediaType mt = getMediaTypeFromPtr(mptr);
 		const char* mts = getMediaTypeStr(mt);
@@ -181,26 +182,28 @@ void CmdSearch(ProgState& ps) {
 	printf("Searching for \"%s\" returned %u results\n", key, filtered.size());
 }
 
-void CmdFilter(ProgState& ps) {
+void CmdDelete(ProgState& ps) {
 	static const char* const CSVMEDIATYPES = "videogame, movie, music"; 
 	if (ps.cb.Tokens() < 2) {
-		printf("Expected a mode: \"filter [search/type] [...]\"\n");
+		printf("Expected a mode: \"delete [search/type] [...]\"\n");
 		return;
 	}
 	const char* var = ps.cb.GetToken(1);
-	
 	if (strcmp(var,"search")==0) {
 		if (ps.cb.Tokens() < 3) {
-			printf("Expected a search key: \"filter search [key]\"\n");
+			printf("Expected a search key: \"delete search [key]\"\n");
 			return;
 		}
 		const char* key = ps.cb.GetToken(2);
 		auto it = std::remove_if(ps.medias.begin(), ps.medias.end(), // Rearranges non matched to end of vec.
-			[key](Media* m) { return !(m->search(key)); });
+			[key](Media* m) { return m->search(key); });
+		for (decltype(it) del = it; del != ps.medias.end();++del) {
+			delete *del;
+		}
 		ps.medias.erase(it, ps.medias.end()); // Erase leftover elements
 	} else if (strcmp(var,"type")==0) {
 		if (ps.cb.Tokens() < 3) {
-			printf("Expected a type: \"filter search [type]\" (%s)\n", CSVMEDIATYPES);
+			printf("Expected a type: \"delete search [type]\" (%s)\n", CSVMEDIATYPES);
 			return;
 		}
 		const char* typestr = ps.cb.GetToken(2);
@@ -210,13 +213,13 @@ void CmdFilter(ProgState& ps) {
 			return;
 		}
 		auto it = std::remove_if(ps.medias.begin(), ps.medias.end(), 
-			[type](Media* m) { return getMediaTypeFromPtr(m) != type; });
+			[type](Media* m) { return getMediaTypeFromPtr(m) == type; });
 		ps.medias.erase(it, ps.medias.end());
 	} else {
 		printf("\"%s\" not a valid filter variable! (%s)\n", var, CSVMEDIATYPES);
 		return;
 	}
-	printf("Filtered to %u results: \"%s\" & \"%s\"\n", ps.medias.size(), var, ps.cb.GetToken(2));
+	printf("%u medias remaining\n", ps.medias.size());
 }
 
 void CmdPrint(ProgState& ps) {	
@@ -233,17 +236,7 @@ void CmdQuit(ProgState& ps) {
 	ps.running = false;
 }
 
-
-void CmdDelete(ProgState& ps) {
-	if (ps.cb.Tokens() < 2) {
-		printf("Expected a key: \"delete [key]\"\n");
-		return;
-	}
-	printf("Unimplemented!\n");	
-	return;	
-}
-
-void CmdAdd(ProgState& ps) {
+void CmdAdd(ProgState& ps) { // TODO: Implement usercreated funcs in media type classes.
 	if (ps.cb.Tokens() < 2) {
 		printf("Expected a type: \"add [type]\" (videogame, movie, music)\n");
 		return;
@@ -299,10 +292,15 @@ void CmdEnableCols(ProgState& ps) {
 	printf("All columns visible!\n");
 }
 
-void CmdReset(ProgState& ps) {
+void CmdDefault(ProgState& ps) {
 	ps.medias = ps.originals;
 	printf("Media reset to default %u elements!\n", ps.medias.size());
 	CmdEnableCols(ps);
+}
+
+void CmdClear(ProgState& ps) {
+	ps.medias.clear();
+	printf("Medias cleared, %u elements!\n", ps.medias.size());
 }
 
 void CmdHelp(ProgState& ps);
@@ -314,18 +312,18 @@ struct CommandDefinition {
 };
 
 const std::unordered_map<std::string, CommandDefinition> cmd_map = {
-	{ "quit", { CmdQuit, "", "Ends the program." }},
-	{ "print", { CmdPrint, "", "Lists all the media." }},
-	{ "size", { CmdSize, "", "Prints out the size of default media and current media groups." }},
-	{ "help", { CmdHelp, "", "this" }},
-	{ "sort", { CmdSort, "[var]", "Sorts the media by the given variable (type, title, year...) (Ascending)" }},
-	{ "search", { CmdSearch, "[keyword]", "Search through media for given keyword." }},
-	{ "filter", { CmdFilter, "[mode] [keyword]", "Remove media not matching the given filter (type, search) and (type/keyword) pair." }}, 
-	{ "reset", { CmdReset, "", "Resets media back to default. Deletes new entries and restores removed defaults. Also enables visibility of all columns." }},
-	{ "delete", {CmdDelete, "[key]", "Deletes any media entries matching the given key, prompts confirmation." }},
-	{ "add", { CmdAdd, "[type]", "Add media of specified type, will prompt for properties and preview." }}, 
-	{ "toggle", { CmdToggle, "[column]", "Toggle the visibility of specified column."}},
-	{ "enablecols", {CmdEnableCols, "", "Enables visibility of all columns."}},
+	{       "quit", { CmdQuit, "", "Ends the program." }},
+	{      "print", { CmdPrint, "", "Lists all the media." }},
+	{       "size", { CmdSize, "", "Prints out the size of default media and current media groups." }},
+	{       "help", { CmdHelp, "", "this" }},
+	{       "sort", { CmdSort, "[var]", "Sorts the media by the given variable (type, title, year...) (Ascending)" }},
+	{     "search", { CmdSearch, "[keyword]", "Search through media for given keyword." }},
+	{     "delete", { CmdDelete, "[mode] [keyword]", "Remove media matching the given (type, search) and (type/keyword) pair." }}, 
+	{    "default", { CmdDefault, "", "Resets media back to default. Deletes new entries and restores removed defaults. Also enables visibility of all columns." }},
+	{        "add", { CmdAdd, "[type]", "Add media of specified type, will prompt for properties and preview." }}, 
+	{     "toggle", { CmdToggle, "[column]", "Toggle the visibility of specified column."}},
+	{ "enablecols", { CmdEnableCols, "", "Enables visibility of all columns."}},
+	{      "clear", { CmdClear, "", "Clears the media list. Removes all medias." }},
 };
 
 void CmdHelp(ProgState& ps) {
