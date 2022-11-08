@@ -6,6 +6,10 @@ Videogame::Videogame(const_cstr& title, const uint& year,
 {
 	ALLOCCPY(publisher);
 }
+Videogame::Videogame(const Videogame& o) : Media(o), rating(o.rating) {
+	publisher = new char[strlen(o.publisher)+1];
+	strcpy(publisher,o.publisher);
+}
 Videogame::~Videogame() {
 	delete[] this->publisher;
 }

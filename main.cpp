@@ -130,8 +130,8 @@ struct ProgState {
 	TableState ts;
 	bool running;
 	CommandBuf cb;
-	const std::vector<Media*>& originals;
-	std::vector<Media*>& medias; // could be a filtered version
+	const std::vector<Media*> originals;
+	std::vector<Media*> medias; // could be a filtered version
 };
 
 void CmdSort(ProgState& ps) {	
@@ -182,6 +182,8 @@ void CmdSearch(ProgState& ps) {
 	printf("Searching for \"%s\" returned %u results\n", key, filtered.size());
 }
 
+#define DEALLOCANDERASE(conditional) for (auto it = ps.medias.begin();it != ps.medias.end();) { \
+			if (conditional){delete(*it);ps.medias.erase(it);}else{++it;}}		
 void CmdDelete(ProgState& ps) {
 	static const char* const CSVMEDIATYPES = "videogame, movie, music"; 
 	if (ps.cb.Tokens() < 2) {
@@ -195,12 +197,7 @@ void CmdDelete(ProgState& ps) {
 			return;
 		}
 		const char* key = ps.cb.GetToken(2);
-		auto it = std::remove_if(ps.medias.begin(), ps.medias.end(), // Rearranges non matched to end of vec.
-			[key](Media* m) { return m->search(key); });
-		for (decltype(it) del = it; del != ps.medias.end();++del) {
-			delete *del;
-		}
-		ps.medias.erase(it, ps.medias.end()); // Erase leftover elements
+		DEALLOCANDERASE((*it)->search(key));
 	} else if (strcmp(var,"type")==0) {
 		if (ps.cb.Tokens() < 3) {
 			printf("Expected a type: \"delete search [type]\" (%s)\n", CSVMEDIATYPES);
@@ -212,11 +209,9 @@ void CmdDelete(ProgState& ps) {
 			printf("\"%s\" is not a valid media type!\n", typestr);
 			return;
 		}
-		auto it = std::remove_if(ps.medias.begin(), ps.medias.end(), 
-			[type](Media* m) { return getMediaTypeFromPtr(m) == type; });
-		ps.medias.erase(it, ps.medias.end());
+		DEALLOCANDERASE(getMediaTypeFromPtr(*it) == type);
 	} else {
-		printf("\"%s\" not a valid filter variable! (%s)\n", var, CSVMEDIATYPES);
+		printf("\"%s\" not a valid filter variable! (search, type)\n", var);
 		return;
 	}
 	printf("%u medias remaining\n", ps.medias.size());
@@ -293,7 +288,19 @@ void CmdEnableCols(ProgState& ps) {
 }
 
 void CmdDefault(ProgState& ps) {
-	ps.medias = ps.originals;
+	ps.medias.clear();
+	ps.medias.reserve(ps.originals.size());
+#define TRYCOPY(BASEPTR, DERIVED) try { const DERIVED* DERIVED##_ptr = dynamic_cast<DERIVED*>(BASEPTR); \
+	if (DERIVED##_ptr !=0) { ps.medias.push_back(DERIVED##_ptr); continue; }\
+} catch (...) {}
+
+	for (auto it = ps.medias.cbegin(); it != ps.medias.cend(); ++it) {
+		const Media* mptr = *it;
+		TRYCOPY(mptr, Videogame);
+		TRYCOPY(mptr, Music);
+		TRYCOPY(mptr, Movie);
+	}
+#undef TRYCOPY
 	printf("Media reset to default %u elements!\n", ps.medias.size());
 	CmdEnableCols(ps);
 }
@@ -351,11 +358,8 @@ std::string tolowercase(const std::string& old) {
 }
 
 int main() {
-	const std::vector<Media*> full = makeDefaultMedias();
-	std::vector<Media*> medias = full;
-
 	ProgState ps = {
-		TableState(), true, CommandBuf(), full, medias
+		TableState(), true, CommandBuf(), makeDefaultMedias(), {}
 	};
 
 	while (ps.running) {

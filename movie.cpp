@@ -6,6 +6,10 @@ Movie::Movie(const_cstr& title, const uint& year,
 {
 	ALLOCCPY(director);
 }
+Movie::Movie(const Movie& o) : Media(o), duration(o.duration), rating(o.rating) {
+	director = new char[strlen(o.director)+1];
+	strcpy(director, o.director);
+}
 Movie::~Movie() {
 	delete[] director;
 }

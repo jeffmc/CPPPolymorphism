@@ -7,6 +7,12 @@ Music::Music(const_cstr& title, const uint& year,
 	ALLOCCPY(artist);
 	ALLOCCPY(publisher);
 }
+Music::Music(const Music& o) : Media(o) {
+	artist = new char[strlen(o.artist)+1];
+	strcpy(artist, o.artist);
+	publisher = new char[strlen(o.publisher)+1];
+	strcpy(publisher, o.publisher);
+}
 Music::~Music() {
 	delete[] this->artist;
 	delete[] this->publisher;

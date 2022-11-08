@@ -9,6 +9,7 @@ private:
 public:
 	Music(const_cstr& title, const uint& year,
 		const_cstr& artist, const_cstr& publisher, const Duration& duration);
+	Music(const Music& o);
 	~Music();
 
 	static Music* usercreated();

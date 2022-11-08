@@ -4,9 +4,12 @@
 
 #include "media.h"
 
-Media::Media(const_cstr& title, const uint& year) {
+Media::Media(const_cstr& title, const uint& year) : year(year) {
 	ALLOCCPY(title);
-	this->year = year;
+}
+Media::Media(const Media& o) : year(o.year) {
+	title = new char[strlen(o.title)+1];
+	strcpy(title,o.title);
 }
 Media::~Media() {
 	printf("~Media() [%p]\n", this);

@@ -8,6 +8,7 @@ private:
 public:
 	Videogame(const_cstr& title, const uint& year,
 			const_cstr publisher, const float& rating);
+	Videogame(const Videogame& vg);
 	~Videogame();
 
 	static Videogame* usercreated();

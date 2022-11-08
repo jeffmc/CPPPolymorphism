@@ -9,6 +9,7 @@ private:
 public:
 	Movie(const_cstr& title, const uint& year,
 			const_cstr& director, const Duration& duration, const float& rating);
+	Movie(const Movie& o);
 	~Movie();
 	
 	static Movie* usercreated();

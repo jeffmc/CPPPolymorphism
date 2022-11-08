@@ -15,6 +15,7 @@ private:
 
 public:
 	Media(const_cstr& title, const uint& year);
+	Media(const Media& o);
 	virtual ~Media();
 	
 	static const std::unordered_map<std::string, MediaType>& getStrTypeMap();
@@ -25,7 +26,6 @@ public:
 	static Var getVar(const std::string& key);
 	
 	static int cmp(const Var v, const Media* a, const Media* b);
-
 
 	const char* getTitle() const;
 	const uint* getYear() const;
