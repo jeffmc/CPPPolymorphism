@@ -7,7 +7,7 @@ Music::Music(const_cstr& title, const uint& year,
 	ALLOCCPY(artist);
 	ALLOCCPY(publisher);
 }
-Music::Music(const Music& o) : Media(o) {
+Music::Music(const Music& o) : Media(o), duration(o.duration) {
 	artist = new char[strlen(o.artist)+1];
 	strcpy(artist, o.artist);
 	publisher = new char[strlen(o.publisher)+1];

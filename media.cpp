@@ -12,7 +12,7 @@ Media::Media(const Media& o) : year(o.year) {
 	strcpy(title,o.title);
 }
 Media::~Media() {
-	printf("~Media() [%p]\n", this);
+	//printf("~Media() [%p]\n", this);
 	delete[] this->title;
 }
 

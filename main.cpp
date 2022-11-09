@@ -275,7 +275,7 @@ void CmdToggle(ProgState& ps) {
 	for (size_t i=0;i<TableState::COL_CT;i++) {
 		if (TableState::COL_VARS[i] == mv) {
 			ps.ts.COL_ENABLED[i] = !ps.ts.COL_ENABLED[i];
-			printf("Toggled visibility of %s!\n", TableState::COL_NAMES);
+			printf("Toggled visibility of %s!\n", TableState::COL_NAMES[i]);
 			return;
 		}
 	}
@@ -290,17 +290,22 @@ void CmdEnableCols(ProgState& ps) {
 void CmdDefault(ProgState& ps) {
 	ps.medias.clear();
 	ps.medias.reserve(ps.originals.size());
-#define TRYCOPY(BASEPTR, DERIVED) try { const DERIVED* DERIVED##_ptr = dynamic_cast<DERIVED*>(BASEPTR); \
-	if (DERIVED##_ptr !=0) { ps.medias.push_back(DERIVED##_ptr); continue; }\
-} catch (...) {}
 
-	for (auto it = ps.medias.cbegin(); it != ps.medias.cend(); ++it) {
-		const Media* mptr = *it;
+// Cast to a derived type, run the derived class' copy constructor and insert the copied instance into the new media vector.
+#define TRYCOPY(BASEPTR, DERIVED) try { const DERIVED* DERIVED##_ptr = dynamic_cast<DERIVED*>(BASEPTR); \
+	if ( DERIVED##_ptr !=0 ) { \
+		ps.medias.push_back( new DERIVED(*( DERIVED##_ptr )) ); \
+		continue; \
+	} } catch (...) {} 
+
+	for (auto it = ps.originals.begin(); it != ps.originals.end(); ++it) {
+		Media* mptr = *it;
 		TRYCOPY(mptr, Videogame);
 		TRYCOPY(mptr, Music);
 		TRYCOPY(mptr, Movie);
 	}
 #undef TRYCOPY
+	
 	printf("Media reset to default %u elements!\n", ps.medias.size());
 	CmdEnableCols(ps);
 }
