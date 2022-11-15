@@ -1,7 +1,15 @@
+#pragma once
 
+#include <vector>
+#include "media.h"
+#include "command.h"
 
-MediaType getMediaTypeFromPtr(Media* m);
-const char* getMediaTypeStr(const MediaType &mt);
+// This file contains some global function declarations and some structs, all necessary for this program.
+
+int main(); // Entry point
+
+MediaType getMediaTypeFromPtr(Media* m); // Return MediaType enum val for given Media pointer.
+const char* getMediaTypeStr(const MediaType &mt); // Return a cstring label for given MediaType.
 
 // Store the width of columns, whether columns are visible,
 // Static members also determine left-align, number of columns, column titles, and enums.
@@ -13,8 +21,10 @@ public:
 	static constexpr const char* COL_NAMES[COL_CT] = {"Type", "Title", "Year", "Creator", "Rating", "Duration", "Publisher" };
 	static constexpr Media::Var COL_VARS[COL_CT] = { Media::Var::Type, Media::Var::Title, Media::Var::Year,
 		 Media::Var::Creator, Media::Var::Rating, Media::Var::Duration, Media::Var::Publisher };
-	int COL_WIDTH[COL_CT] = { 25, 25, 4, 25, 6, 9, 25 };
-	bool COL_ENABLED[COL_CT] = { false, true, true, true, true, true, true };
+	
+	// Non-static non-const members
+	int COL_WIDTH[COL_CT] = { 25, 25, 4, 25, 6, 9, 25 }; // TODO: Allow user to modify widths (EXCEPT DURATION)
+	bool COL_ENABLED[COL_CT] = { false, true, true, true, true, true, true }; // modifiable through toggle cmd
 };
 
 // print out the column titles filling each column width.
@@ -44,3 +54,17 @@ struct CommandDefinition {
 	const std::string args;
 	const std::string help;	
 };
+
+// Commands TODO: Put in their own namespace!
+void CmdSort(ProgState& ps); // Sort the media by a given column variable, look at Media::cmp(...)
+void CmdSize(ProgState& ps); // Print out the size of media vectors (defaults and current)
+void CmdSearch(ProgState& ps); // Search through medias using the specified token, leaves vector unchanged.
+void CmdDelete(ProgState& ps); // Delete medias given a specified search key
+void CmdPrint(ProgState& ps); // Prints out the table header and content for all medias.
+void CmdQuit(ProgState& ps); // Quits program as long as additional arguments aren't accidentally passed.
+void CmdAdd(ProgState& ps); // Add different types of media, using Derived::usercreated() to instantiate.
+void CmdToggle(ProgState& ps); // Toggle the visibility of the selected column
+void CmdEnableCols(ProgState& ps); // Enable visibility of all columns
+void CmdDefault(ProgState& ps); // Copies from defaults into current, restores visibility of all columns.
+void CmdClear(ProgState& ps); // Clear all medias (TODO: Implement as wildcard * in delete command!)
+void CmdHelp(ProgState& ps); // Prints command keywords, arguments, and descriptions

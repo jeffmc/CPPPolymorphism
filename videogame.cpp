@@ -10,7 +10,7 @@ Videogame::Videogame(const Videogame& o) : Media(o), rating(o.rating) {
 	publisher = new char[strlen(o.publisher)+1];
 	strcpy(publisher,o.publisher);
 }
-Videogame::~Videogame() override {
+Videogame::~Videogame() {
 	delete[] this->publisher;
 }
 

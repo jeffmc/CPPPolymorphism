@@ -15,7 +15,7 @@ Movie::Movie(const Movie& o) : Media(o), duration(o.duration), rating(o.rating) 
 }
 
 // Destructor
-Movie::~Movie() override {
+Movie::~Movie() {
 	delete[] director;
 }
 

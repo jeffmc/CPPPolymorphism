@@ -1,5 +1,7 @@
+#pragma once
+
 #include <vector>
-#include <string>
+#include <string> // TODO: No more of this!
 
 // This class is meant to handle user input from stdin.
 // It tokenizes whatever input is recieved and makes it accessible to user.

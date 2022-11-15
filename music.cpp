@@ -13,7 +13,7 @@ Music::Music(const Music& o) : Media(o), duration(o.duration) {
 	publisher = new char[strlen(o.publisher)+1];
 	strcpy(publisher, o.publisher);
 }
-Music::~Music() override {
+Music::~Music() {
 	delete[] this->artist;
 	delete[] this->publisher;
 }

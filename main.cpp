@@ -3,7 +3,6 @@
 // This is a user-managed database of information related to different types of media.
 // The user can add, search, and delete media from the database (vector). The user may also quit the program.
 // In addition to those commands, the user may also print out all media, sort the media by column, toggle column visibility, 
-// reset to defaults, and clear out all media entirely.
 
 #include <iostream> // console interaction
 #include <vector> // storing media pointers
@@ -256,10 +255,9 @@ void CmdAdd(ProgState& ps) { // TODO: Implement usercreated funcs in media type 
 		return;
 	}
 	printf("Got pointer: %p\n", mptr);
-	delete mptr;
+	delete mptr; // TODO: Add to vector instead!
 }
 
-// Toggle the visibility of the selected column
 void CmdToggle(ProgState& ps) {
 	if (ps.cb.Tokens() < 2) {
 		printf("Expected a column argument: \" toggle [column]\"\n");
@@ -280,7 +278,6 @@ void CmdToggle(ProgState& ps) {
 	printf("%s: %s, didn't find what should've been a match!\n", __FILE__, __LINE__);
 } 
 
-// Enable visibility of all columns
 void CmdEnableCols(ProgState& ps) {
 	for (size_t i=0;i<TableState::COL_CT;i++) ps.ts.COL_ENABLED[i] = true;
 	printf("All columns visible!\n");
@@ -317,7 +314,6 @@ void CmdClear(ProgState& ps) {
 	printf("Medias cleared, %u elements!\n", ps.medias.size());
 }
 
-void CmdHelp(ProgState& ps); // Need to be declared before cmd_map
 const std::unordered_map<std::string, CommandDefinition> cmd_map = { // keys are commands for user
 	{       "quit", { CmdQuit, "", "Ends the program." }},
 	{      "print", { CmdPrint, "", "Lists all the media." }},
@@ -333,7 +329,6 @@ const std::unordered_map<std::string, CommandDefinition> cmd_map = { // keys are
 	{      "clear", { CmdClear, "", "Clears the media list. Removes all medias." }},
 };
 
-// Prints command keywords, arguments, and descriptions
 void CmdHelp(ProgState& ps) {
 	const char* const prefix = "	";
 	printf("Help:\n");
@@ -350,6 +345,7 @@ void CmdHelp(ProgState& ps) {
 	}
 }
 
+// TODO: DESTROY THIS FUNCTION OR REWRITE FOR CSTRINGS!!!
 // Return a string that is lowercase.
 std::string tolowercase(const std::string& old) {
 	std::string lowered = old;
