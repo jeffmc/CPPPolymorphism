@@ -4,6 +4,9 @@
 #include "music.h"
 #include "movie.h"
 
+// I wrote in values from different websites (IMDb, IGN, and Apple Music).
+// Not guaranteed to be accurate.
+
 std::vector<Media*> makeDefaultMedias()
 {
 	return std::vector<Media*>

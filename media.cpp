@@ -4,18 +4,22 @@
 
 #include "media.h"
 
+// Value constructor, copies arguments.
 Media::Media(const_cstr& title, const uint& year) : year(year) {
 	ALLOCCPY(title);
 }
+// Copy constructor (used for copying originals into the current medias.)
 Media::Media(const Media& o) : year(o.year) {
 	title = new char[strlen(o.title)+1];
 	strcpy(title,o.title);
 }
+// Classic delete.
 Media::~Media() {
 	//printf("~Media() [%p]\n", this);
 	delete[] this->title;
 }
 
+// Map lowercase strings to MediaType enum.
 const std::unordered_map<std::string, MediaType>& Media::getStrTypeMap() {
 	static const std::unordered_map<std::string, MediaType> str_type_map = {
 		{ "videogame", MediaType::Videogame },
@@ -25,6 +29,7 @@ const std::unordered_map<std::string, MediaType>& Media::getStrTypeMap() {
 	return str_type_map;
 };
 
+// Get MediaType enum val from string.
 MediaType Media::getType(const std::string& key) {
 	try {
 		MediaType found = Media::getStrTypeMap().at(key);
@@ -32,6 +37,8 @@ MediaType Media::getType(const std::string& key) {
 	} catch (...) { }
 	return MediaType::UnknownType;		
 }
+
+// Map strings to Media::Var
 const std::unordered_map<std::string, Media::Var>& Media::getStrVarMap() {
 	static std::unordered_map<std::string, Var> str_var_map = {
 		{      "type", Media::Var::Type },
@@ -45,6 +52,7 @@ const std::unordered_map<std::string, Media::Var>& Media::getStrVarMap() {
 	return str_var_map;
 };
 
+// Get Media::Var enum val from string.
 Media::Var Media::getVar(const std::string& key) {
 	try {
 		Media::Var found = Media::getStrVarMap().at(key);
@@ -53,6 +61,7 @@ Media::Var Media::getVar(const std::string& key) {
 	return Media::Var::NotFound;		
 }
 
+// Compare two medias, "a" and "b" using the given variable "v"
 int Media::cmp(const Media::Var v, const Media* a, const Media* b) {
 	const char *as, *bs;
 	const float *ar, *br;
@@ -108,14 +117,17 @@ int Media::cmp(const Media::Var v, const Media* a, const Media* b) {
 	return 0;
 }
 
+// Should always return valid pointers
 const char* Media::getTitle() const { return title; }
 const uint* Media::getYear() const { return &year; }
 
+// May return nullptrs.
 const float* Media::getRating() const { return nullptr; }
 const Duration* Media::getDuration() const { return nullptr; }
 const char* Media::getCreator() const { return nullptr; }
 const char* Media::getPublisher() const { return nullptr; }
 
+// Returns true if key is found within variables of media.
 bool Media::search(const char* key) const {
 	return strstr(title,key) || atoi(key) == year;	
 };

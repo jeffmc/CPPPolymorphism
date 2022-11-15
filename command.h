@@ -1,6 +1,9 @@
 #include <vector>
 #include <string>
 
+// This class is meant to handle user input from stdin.
+// It tokenizes whatever input is recieved and makes it accessible to user.
+// Everything stays in its original case.
 class CommandBuf {
 private:
 	std::string m_Raw;
@@ -13,6 +16,7 @@ public:
 	std::string GetLine() const; // Get independent line of input from user, has no effect on raw or tokens.
 	void operator()(const char* prefix); // Get command from buffer using specified prefix
 	
+	// Debug functions
 	//void printdbg() const;
 	void printtkns() const;
 };

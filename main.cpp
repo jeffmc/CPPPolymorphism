@@ -1,5 +1,9 @@
 // Jeff McMillan 10-21-2022
-// CPP Classes assignment
+// CPP Classes
+// This is a user-managed database of information related to different types of media.
+// The user can add, search, and delete media from the database (vector). The user may also quit the program.
+// In addition to those commands, the user may also print out all media, sort the media by column, toggle column visibility, 
+// reset to defaults, and clear out all media entirely.
 
 #include <iostream> // console interaction
 #include <vector> // storing media pointers
@@ -12,6 +16,8 @@
 #include <unordered_map> // Pair command keyword with its function pointer.
 #include <string> // For command input/output, detecting keywords
 
+#include "main.h" // Global function declarations, a few structs.
+
 #include "media.h" // Media definitions 
 #include "videogame.h" // Publisher and rating
 #include "movie.h" // Creator, duration and rating 
@@ -20,6 +26,7 @@
 #include "command.h" // Command buffer, all interaction with console input, and tokenization of the input string.
 #include "default.h" // default data
 
+// Return which type of derived type of Media this is pointer to using dynamic_cast
 #define TRYRET(PTR, MTYPE) try { MTYPE* tp = dynamic_cast<MTYPE*>(PTR); if (tp!=0) return MediaType::MTYPE; } catch (...) {}
 MediaType getMediaTypeFromPtr(Media* m) {
 	TRYRET(m, Videogame);
@@ -39,18 +46,8 @@ const char* getMediaTypeStr(const MediaType &mt) {
 	}
 }
 #undef CASERET
-struct TableState {
-public:
-	static constexpr int COL_CT = 7;
-	static constexpr bool COL_LA[COL_CT]     = {false, false, false, true, false, false, true };
-	// TODO: Unify this definition and the names within map in Media::getStrVarMap();
-	static constexpr const char* COL_NAMES[COL_CT] = {"Type", "Title", "Year", "Creator", "Rating", "Duration", "Publisher" };
-	static constexpr Media::Var COL_VARS[COL_CT] = { Media::Var::Type, Media::Var::Title, Media::Var::Year,
-		 Media::Var::Creator, Media::Var::Rating, Media::Var::Duration, Media::Var::Publisher };
-	int COL_WIDTH[COL_CT] = { 25, 25, 4, 25, 6, 9, 25 };
-	bool COL_ENABLED[COL_CT] = { false, true, true, true, true, true, true };
-};
 
+// print out the column titles filling each column width.
 void printHeader(const TableState& ts) {
 	for (int i=0;i<ts.COL_CT;i++) {
 		if (ts.COL_ENABLED[i]) {
@@ -61,6 +58,7 @@ void printHeader(const TableState& ts) {
 	printf("\n");
 }
 
+// Comparison between Duration instances.
 int Duration::cmp(const Duration &a, const Duration &b) {
 	int hd = a.hours - b.hours;
 	if (hd != 0) return hd;
@@ -68,13 +66,16 @@ int Duration::cmp(const Duration &a, const Duration &b) {
 	if (md != 0) return md;
 	return a.secs - b.secs;
 }
-template<typename T>
+
+// Swap two elements at given indices within a vector.
+template<typename T> // MAY HAVE TO REMOVE THIS LINE IN ORDER TO COMPILE!
 void vecswap(std::vector<T> &v, const size_t a, const size_t b) {
 	T tmp = v[a];
 	v[a] = v[b];
 	v[b] = tmp;	
 };
 
+// print a table of medias (doesn't print the header)
 void printMedias(const TableState& ts, const std::vector<Media*> &medias) {
 	for (auto it = medias.cbegin(); it!=medias.cend(); ++it)
 	{	
@@ -125,16 +126,7 @@ void printMedias(const TableState& ts, const std::vector<Media*> &medias) {
 }
 
 // Commands
-
-struct ProgState {
-	TableState ts;
-	bool running;
-	CommandBuf cb;
-	const std::vector<Media*> originals;
-	std::vector<Media*> medias; // could be a filtered version
-};
-
-void CmdSort(ProgState& ps) {	
+void CmdSort(ProgState& ps) { // Sort the media by a given column variable, look at Media::cmp(...)
 	if (ps.cb.Tokens() < 2) {
 		printf("Need more arguments!\n");
 		return;	
@@ -162,12 +154,12 @@ void CmdSort(ProgState& ps) {
  	printf("Using %u swaps, sorted by: %s\n", swaps, ps.cb.GetToken(1)); // TODO: Print var as string, not cmdbuf token
 }
 
-void CmdSize(ProgState& ps) {	
-	printf("Total Media Count: %i\n", ps.originals.size());
-	printf("Filtered Media Count: %i\n", ps.medias.size());
+void CmdSize(ProgState& ps) { // Print out the size of media vectors
+	printf("Default Media Count: %u\n", ps.originals.size());
+	printf("Current Media Count: %u\n", ps.medias.size());
 }
 
-// Search within medias (filtered)
+// Search the current media array using the specified token, doesn't add/remove any objects from array.
 void CmdSearch(ProgState& ps) {
 	if (ps.cb.Tokens() < 2) {
 		printf("Need a search token!\n");
@@ -176,12 +168,13 @@ void CmdSearch(ProgState& ps) {
 	const char* key = ps.cb.GetToken(1);
 	std::vector<Media*> filtered = ps.medias;
 	std::remove_if(filtered.begin(), filtered.end(), 
-		[key](Media* m) { return m->search(key); });
+		[key](Media* m) { return (!m->search(key)); });
 	printHeader(ps.ts);
 	printMedias(ps.ts, filtered);	
 	printf("Searching for \"%s\" returned %u results\n", key, filtered.size());
 }
 
+// Deallocate the media instances within the vector when
 #define DEALLOCANDERASE(conditional) for (auto it = ps.medias.begin();it != ps.medias.end();) { \
 			if (conditional){delete(*it);ps.medias.erase(it);}else{++it;}}		
 void CmdDelete(ProgState& ps) {
@@ -214,14 +207,17 @@ void CmdDelete(ProgState& ps) {
 		printf("\"%s\" not a valid filter variable! (search, type)\n", var);
 		return;
 	}
+	// TODO: Add a confirmation prompt (y/n)
 	printf("%u medias remaining\n", ps.medias.size());
 }
 
+// Prints out the table header and content for all medias.
 void CmdPrint(ProgState& ps) {	
 	printHeader(ps.ts);
 	printMedias(ps.ts, ps.medias);
 }
 
+// Quits program as long as additional arguments aren't accidentally passed.
 void CmdQuit(ProgState& ps) {
 	if (ps.cb.Tokens() > 1) {
 		printf("Didn't expect additional arguments!\n");
@@ -231,6 +227,7 @@ void CmdQuit(ProgState& ps) {
 	ps.running = false;
 }
 
+// Add different types of media, delegating to the Derived::usercreated() method to instantiate.
 void CmdAdd(ProgState& ps) { // TODO: Implement usercreated funcs in media type classes.
 	if (ps.cb.Tokens() < 2) {
 		printf("Expected a type: \"add [type]\" (videogame, movie, music)\n");
@@ -262,6 +259,7 @@ void CmdAdd(ProgState& ps) { // TODO: Implement usercreated funcs in media type 
 	delete mptr;
 }
 
+// Toggle the visibility of the selected column
 void CmdToggle(ProgState& ps) {
 	if (ps.cb.Tokens() < 2) {
 		printf("Expected a column argument: \" toggle [column]\"\n");
@@ -282,21 +280,24 @@ void CmdToggle(ProgState& ps) {
 	printf("%s: %s, didn't find what should've been a match!\n", __FILE__, __LINE__);
 } 
 
+// Enable visibility of all columns
 void CmdEnableCols(ProgState& ps) {
 	for (size_t i=0;i<TableState::COL_CT;i++) ps.ts.COL_ENABLED[i] = true;
 	printf("All columns visible!\n");
 }
 
+// Restore media vector to a copy of instances in the original vector (uses copy constructor).
+// Also calls CmdEnableCols()
 void CmdDefault(ProgState& ps) {
 	ps.medias.clear();
 	ps.medias.reserve(ps.originals.size());
 
 // Cast to a derived type, run the derived class' copy constructor and insert the copied instance into the new media vector.
 #define TRYCOPY(BASEPTR, DERIVED) try { const DERIVED* DERIVED##_ptr = dynamic_cast<DERIVED*>(BASEPTR); \
-	if ( DERIVED##_ptr !=0 ) { \
-		ps.medias.push_back( new DERIVED(*( DERIVED##_ptr )) ); \
-		continue; \
-	} } catch (...) {} 
+if ( DERIVED##_ptr !=0 ) { \
+	ps.medias.push_back( new DERIVED(*( DERIVED##_ptr )) ); \
+	continue; \
+} } catch (...) {} 
 
 	for (auto it = ps.originals.begin(); it != ps.originals.end(); ++it) {
 		Media* mptr = *it;
@@ -310,20 +311,14 @@ void CmdDefault(ProgState& ps) {
 	CmdEnableCols(ps);
 }
 
+// Clear all medias (TODO: Implement as wildcard * in delete command!)
 void CmdClear(ProgState& ps) {
 	ps.medias.clear();
 	printf("Medias cleared, %u elements!\n", ps.medias.size());
 }
 
-void CmdHelp(ProgState& ps);
-struct CommandDefinition {
-	using Function = void(*)(ProgState&);
-	const Function func;
-	const std::string args;
-	const std::string help;	
-};
-
-const std::unordered_map<std::string, CommandDefinition> cmd_map = {
+void CmdHelp(ProgState& ps); // Need to be declared before cmd_map
+const std::unordered_map<std::string, CommandDefinition> cmd_map = { // keys are commands for user
 	{       "quit", { CmdQuit, "", "Ends the program." }},
 	{      "print", { CmdPrint, "", "Lists all the media." }},
 	{       "size", { CmdSize, "", "Prints out the size of default media and current media groups." }},
@@ -338,6 +333,7 @@ const std::unordered_map<std::string, CommandDefinition> cmd_map = {
 	{      "clear", { CmdClear, "", "Clears the media list. Removes all medias." }},
 };
 
+// Prints command keywords, arguments, and descriptions
 void CmdHelp(ProgState& ps) {
 	const char* const prefix = "	";
 	printf("Help:\n");
@@ -354,6 +350,7 @@ void CmdHelp(ProgState& ps) {
 	}
 }
 
+// Return a string that is lowercase.
 std::string tolowercase(const std::string& old) {
 	std::string lowered = old;
 	for (auto it=lowered.begin();it!=lowered.end();++it) {
@@ -363,18 +360,19 @@ std::string tolowercase(const std::string& old) {
 }
 
 int main() {
-	ProgState ps = {
+	// Instantiate default TableState, program is running, default CommandBuf, default originals, and blank currents.
+	ProgState ps = { // Since all command functions receive same arguments, this is the single common arg.
 		TableState(), true, CommandBuf(), makeDefaultMedias(), {}
 	};
 
-	while (ps.running) {
-		ps.cb("> ");
-		if (ps.cb.Tokens() < 1) continue;
-		std::string cmd = tolowercase(ps.cb.GetToken(0));
-		try {
-			CommandDefinition::Function func = cmd_map.at(cmd).func;
-			func(ps);
-		} catch (...) { printf("Error encountered!\n"); }	
+	while (ps.running) { // Keep prompting for commands as long as user hasn't ended program/
+		ps.cb("> "); // Prompt user for input
+		if (ps.cb.Tokens() < 1) continue; // If no tokens are passed, skip loop.
+		std::string cmd = tolowercase(ps.cb.GetToken(0)); // Commands are case-INSENSITIVE.
+		try { // Try to find the user's command!
+			CommandDefinition::Function func = cmd_map.at(cmd).func; // Find command function from key.
+			func(ps); // Call found function using the current ProgState 
+		} catch (...) { printf("\"%s\" is not a known command!\n", ps.cb.GetToken(0)); } // When key is not found in map.
 	}	
 
 	return 0;
