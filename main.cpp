@@ -35,7 +35,7 @@ MediaType getMediaTypeFromPtr(Media* m) {
 }
 #undef TRYRET
 #define CASERET(MTYPE) case MediaType::MTYPE: return #MTYPE;
-const char* getMediaTypeStr(const MediaType &mt) {
+const char* getMediaTypeStr(const MediaType &mt) { // TODO: Replace this code wiht unordered_map!
 	switch (mt) {
 	CASERET(Videogame);
 	CASERET(Movie);
@@ -127,13 +127,16 @@ void printMedias(const TableState& ts, const std::vector<Media*> &medias) {
 // Commands
 void CmdSort(ProgState& ps) { // Sort the media by a given column variable, look at Media::cmp(...)
 	if (ps.cb.Tokens() < 2) {
-		printf("Need more arguments!\n");
+		printf("\"sort [variable]\": expected a sort variable!\n");
 		return;	
 	}
 
 	Media::Var sortvar = Media::getVar(ps.cb.GetToken(1));
 	if (sortvar == Media::Var::NotFound) {
 		printf("\"%s\" not a valid media variable!\n", ps.cb.GetToken(1));
+		return;
+	} else if (sortvar == Media::Var::Type) {
+		printf("Have not implemented sorting by media type!\n");
 		return;
 	}
 
@@ -166,8 +169,10 @@ void CmdSearch(ProgState& ps) {
 	}	
 	const char* key = ps.cb.GetToken(1);
 	std::vector<Media*> filtered = ps.medias;
-	std::remove_if(filtered.begin(), filtered.end(), 
-		[key](Media* m) { return (!m->search(key)); });
+	printf("%u unfiltered size\n", filtered.size());
+	auto iter = std::remove_if(filtered.begin(), filtered.end(), 
+		[key](Media* m) { return !(m->search(key)); });
+	filtered.erase(iter, filtered.end());
 	printHeader(ps.ts);
 	printMedias(ps.ts, filtered);	
 	printf("Searching for \"%s\" returned %u results\n", key, filtered.size());
@@ -177,7 +182,7 @@ void CmdSearch(ProgState& ps) {
 #define DEALLOCANDERASE(conditional) for (auto it = ps.medias.begin();it != ps.medias.end();) { \
 			if (conditional){delete(*it);ps.medias.erase(it);}else{++it;}}		
 void CmdDelete(ProgState& ps) {
-	static const char* const CSVMEDIATYPES = "videogame, movie, music"; 
+	static const char* const CSVMEDIATYPES = "videogame, movie, music"; // Create this dynamically 
 	if (ps.cb.Tokens() < 2) {
 		printf("Expected a mode: \"delete [search/type] [...]\"\n");
 		return;
@@ -284,7 +289,6 @@ void CmdEnableCols(ProgState& ps) {
 }
 
 // Restore media vector to a copy of instances in the original vector (uses copy constructor).
-// Also calls CmdEnableCols()
 void CmdDefault(ProgState& ps) {
 	ps.medias.clear();
 	ps.medias.reserve(ps.originals.size());
@@ -305,7 +309,6 @@ if ( DERIVED##_ptr !=0 ) { \
 #undef TRYCOPY
 	
 	printf("Media reset to default %u elements!\n", ps.medias.size());
-	CmdEnableCols(ps);
 }
 
 // Clear all medias (TODO: Implement as wildcard * in delete command!)
@@ -322,7 +325,7 @@ const std::unordered_map<std::string, CommandDefinition> cmd_map = { // keys are
 	{       "sort", { CmdSort, "[var]", "Sorts the media by the given variable (type, title, year...) (Ascending)" }},
 	{     "search", { CmdSearch, "[keyword]", "Search through media for given keyword." }},
 	{     "delete", { CmdDelete, "[mode] [keyword]", "Remove media matching the given (type, search) and (type/keyword) pair." }}, 
-	{    "default", { CmdDefault, "", "Resets media back to default. Deletes new entries and restores removed defaults. Also enables visibility of all columns." }},
+	{    "default", { CmdDefault, "", "Resets media back to default. Deletes new entries and restores removed defaults." }},
 	{        "add", { CmdAdd, "[type]", "Add media of specified type, will prompt for properties and preview." }}, 
 	{     "toggle", { CmdToggle, "[column]", "Toggle the visibility of specified column."}},
 	{ "enablecols", { CmdEnableCols, "", "Enables visibility of all columns."}},

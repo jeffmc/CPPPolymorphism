@@ -23,7 +23,7 @@ public:
 		 Media::Var::Creator, Media::Var::Rating, Media::Var::Duration, Media::Var::Publisher };
 	
 	// Non-static non-const members
-	int COL_WIDTH[COL_CT] = { 25, 25, 4, 25, 6, 9, 25 }; // TODO: Allow user to modify widths (EXCEPT DURATION)
+	int COL_WIDTH[COL_CT] = { 15, 25, 4, 25, 6, 9, 25 }; // TODO: Allow user to modify widths (EXCEPT DURATION)
 	bool COL_ENABLED[COL_CT] = { false, true, true, true, true, true, true }; // modifiable through toggle cmd
 };
 
@@ -65,6 +65,6 @@ void CmdQuit(ProgState& ps); // Quits program as long as additional arguments ar
 void CmdAdd(ProgState& ps); // Add different types of media, using Derived::usercreated() to instantiate.
 void CmdToggle(ProgState& ps); // Toggle the visibility of the selected column
 void CmdEnableCols(ProgState& ps); // Enable visibility of all columns
-void CmdDefault(ProgState& ps); // Copies from defaults into current, restores visibility of all columns.
+void CmdDefault(ProgState& ps); // Copies from defaults into current.
 void CmdClear(ProgState& ps); // Clear all medias (TODO: Implement as wildcard * in delete command!)
 void CmdHelp(ProgState& ps); // Prints command keywords, arguments, and descriptions

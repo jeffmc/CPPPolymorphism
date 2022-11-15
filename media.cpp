@@ -60,7 +60,6 @@ Media::Var Media::getVar(const std::string& key) {
 	} catch (...) { }
 	return Media::Var::NotFound;		
 }
-
 // Compare two medias, "a" and "b" using the given variable "v"
 int Media::cmp(const Media::Var v, const Media* a, const Media* b) {
 	const char *as, *bs;
@@ -113,6 +112,9 @@ int Media::cmp(const Media::Var v, const Media* a, const Media* b) {
 			return (as==nullptr)?-1:1;
 		}
 		break;
+	default:
+		printf("Unsortable Media::Var in Media::cmp()!\n");
+		return 0;
 	}
 	return 0;
 }
