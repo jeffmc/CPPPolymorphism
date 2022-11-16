@@ -124,227 +124,214 @@ void printMedias(const TableState& ts, const std::vector<Media*> &medias) {
 	}
 }
 
-// Commands
-void CmdSort(ProgState& ps) { // Sort the media by a given column variable, look at Media::cmp(...)
-	if (ps.cb.Tokens() < 2) {
-		printf("\"sort [variable]\": expected a sort variable!\n");
-		return;	
-	}
+namespace Command {
 
-	Media::Var sortvar = Media::getVar(ps.cb.GetToken(1));
-	if (sortvar == Media::Var::NotFound) {
-		printf("\"%s\" not a valid media variable!\n", ps.cb.GetToken(1));
-		return;
-	} else if (sortvar == Media::Var::Type) {
-		printf("Have not implemented sorting by media type!\n");
-		return;
-	}
+	void Sort(ProgState& ps) { // Sort the media by a given column variable, look at Media::cmp(...)
+		if (ps.cb.Tokens() < 2) {
+			printf("\"sort [variable]\": expected a sort variable!\n");
+			return;	
+		}
 
-	size_t n = ps.medias.size();
-	bool swapped = true;
-	size_t swaps = 0;
-	while (swapped) {
-		swapped = false;
-		for (int i=1;i<n;i++) {
-			if (Media::cmp(sortvar, ps.medias[i-1], ps.medias[i])>0) {
-				vecswap<Media*>(ps.medias, i-1,i);
-				swapped = true;
-				swaps++;
+		Media::Var sortvar = Media::getVar(ps.cb.GetToken(1));
+		if (sortvar == Media::Var::NotFound) {
+			printf("\"%s\" not a valid media variable!\n", ps.cb.GetToken(1));
+			return;
+		} else if (sortvar == Media::Var::Type) {
+			printf("Have not implemented sorting by media type!\n");
+			return;
+		}
+
+		size_t n = ps.medias.size();
+		bool swapped = true;
+		size_t swaps = 0;
+		while (swapped) {
+			swapped = false;
+			for (int i=1;i<n;i++) {
+				if (Media::cmp(sortvar, ps.medias[i-1], ps.medias[i])>0) {
+					vecswap<Media*>(ps.medias, i-1,i);
+					swapped = true;
+					swaps++;
+				}
 			}
 		}
+		printf("Using %u swaps, sorted by: %s\n", swaps, ps.cb.GetToken(1)); // TODO: Print var as string, not cmdbuf token
 	}
- 	printf("Using %u swaps, sorted by: %s\n", swaps, ps.cb.GetToken(1)); // TODO: Print var as string, not cmdbuf token
-}
 
-void CmdSize(ProgState& ps) { // Print out the size of media vectors
-	printf("Default Media Count: %u\n", ps.originals.size());
-	printf("Current Media Count: %u\n", ps.medias.size());
-}
-
-// Search the current media array using the specified token, doesn't add/remove any objects from array.
-void CmdSearch(ProgState& ps) {
-	if (ps.cb.Tokens() < 2) {
-		printf("Need a search token!\n");
-		return;
-	}	
-	const char* key = ps.cb.GetToken(1);
-	std::vector<Media*> filtered = ps.medias;
-	printf("%u unfiltered size\n", filtered.size());
-	auto iter = std::remove_if(filtered.begin(), filtered.end(), 
-		[key](Media* m) { return !(m->search(key)); });
-	filtered.erase(iter, filtered.end());
-	printHeader(ps.ts);
-	printMedias(ps.ts, filtered);	
-	printf("Searching for \"%s\" returned %u results\n", key, filtered.size());
-}
-
-// Deallocate the media instances within the vector when
-#define DEALLOCANDERASE(conditional) for (auto it = ps.medias.begin();it != ps.medias.end();) { \
-			if (conditional){delete(*it);ps.medias.erase(it);}else{++it;}}		
-void CmdDelete(ProgState& ps) {
-	static const char* const CSVMEDIATYPES = "videogame, movie, music"; // Create this dynamically 
-	if (ps.cb.Tokens() < 2) {
-		printf("Expected a mode: \"delete [search/type] [...]\"\n");
-		return;
+	void Size(ProgState& ps) { // Print out the size of media vectors
+		printf("Default Media Count: %u\n", ps.originals.size());
+		printf("Current Media Count: %u\n", ps.medias.size());
 	}
-	const char* var = ps.cb.GetToken(1);
-	if (strcmp(var,"search")==0) {
-		if (ps.cb.Tokens() < 3) {
-			printf("Expected a search key: \"delete search [key]\"\n");
+
+	// Search the current media array using the specified token, doesn't add/remove any objects from array.
+	void Search(ProgState& ps) {
+		if (ps.cb.Tokens() < 2) {
+			printf("Need a search token!\n");
+			return;
+		}	
+		const char* key = ps.cb.GetToken(1);
+		std::vector<Media*> filtered = ps.medias;
+		printf("%u unfiltered size\n", filtered.size());
+		auto iter = std::remove_if(filtered.begin(), filtered.end(), 
+			[key](Media* m) { return !(m->search(key)); });
+		filtered.erase(iter, filtered.end());
+		printHeader(ps.ts);
+		printMedias(ps.ts, filtered);	
+		printf("Searching for \"%s\" returned %u results\n", key, filtered.size());
+	}
+
+	// Deallocate the media instances within the vector when
+	#define DEALLOCANDERASE(conditional) for (auto it = ps.medias.begin();it != ps.medias.end();) { \
+				if (conditional){delete(*it);ps.medias.erase(it);}else{++it;}}		
+	void Delete(ProgState& ps) {
+		static const char* const CSVMEDIATYPES = "videogame, movie, music"; // Create this dynamically 
+		if (ps.cb.Tokens() < 2) {
+			printf("Expected a mode: \"delete [search/type] [...]\"\n");
 			return;
 		}
-		const char* key = ps.cb.GetToken(2);
-		DEALLOCANDERASE((*it)->search(key));
-	} else if (strcmp(var,"type")==0) {
-		if (ps.cb.Tokens() < 3) {
-			printf("Expected a type: \"delete search [type]\" (%s)\n", CSVMEDIATYPES);
+		const char* var = ps.cb.GetToken(1);
+		if (strcmp(var,"search")==0) {
+			if (ps.cb.Tokens() < 3) {
+				printf("Expected a search key: \"delete search [key]\"\n");
+				return;
+			}
+			const char* key = ps.cb.GetToken(2);
+			DEALLOCANDERASE((*it)->search(key));
+		} else if (strcmp(var,"type")==0) {
+			if (ps.cb.Tokens() < 3) {
+				printf("Expected a type: \"delete search [type]\" (%s)\n", CSVMEDIATYPES);
+				return;
+			}
+			const char* typestr = ps.cb.GetToken(2);
+			const MediaType type = Media::getType(typestr);
+			if (type == MediaType::UnknownType) {
+				printf("\"%s\" is not a valid media type!\n", typestr);
+				return;
+			}
+			DEALLOCANDERASE(getMediaTypeFromPtr(*it) == type);
+		} else {
+			printf("\"%s\" not a valid filter variable! (search, type)\n", var);
 			return;
 		}
-		const char* typestr = ps.cb.GetToken(2);
-		const MediaType type = Media::getType(typestr);
-		if (type == MediaType::UnknownType) {
-			printf("\"%s\" is not a valid media type!\n", typestr);
+		// TODO: Add a confirmation prompt (y/n)
+		printf("%u medias remaining\n", ps.medias.size());
+	}
+
+	// Prints out the table header and content for all medias.
+	void Print(ProgState& ps) {	
+		printHeader(ps.ts);
+		printMedias(ps.ts, ps.medias);
+	}
+
+	// Quits program as long as additional arguments aren't accidentally passed.
+	void Quit(ProgState& ps) {
+		if (ps.cb.Tokens() > 1) {
+			printf("Didn't expect additional arguments!\n");
 			return;
 		}
-		DEALLOCANDERASE(getMediaTypeFromPtr(*it) == type);
-	} else {
-		printf("\"%s\" not a valid filter variable! (search, type)\n", var);
-		return;
+		printf("Quit!\n");
+		ps.running = false;
 	}
-	// TODO: Add a confirmation prompt (y/n)
-	printf("%u medias remaining\n", ps.medias.size());
-}
 
-// Prints out the table header and content for all medias.
-void CmdPrint(ProgState& ps) {	
-	printHeader(ps.ts);
-	printMedias(ps.ts, ps.medias);
-}
-
-// Quits program as long as additional arguments aren't accidentally passed.
-void CmdQuit(ProgState& ps) {
-	if (ps.cb.Tokens() > 1) {
-		printf("Didn't expect additional arguments!\n");
-		return;
-	}
-	printf("Quit!\n");
-	ps.running = false;
-}
-
-// Add different types of media, delegating to the Derived::usercreated() method to instantiate.
-void CmdAdd(ProgState& ps) { // TODO: Implement usercreated funcs in media type classes.
-	if (ps.cb.Tokens() < 2) {
-		printf("Expected a type: \"add [type]\" (videogame, movie, music)\n");
-		return;
-	} else if (ps.cb.Tokens() > 2) {
-		printf("Unexpected additional tokens!\n");
-		return;
-	}
-	MediaType mt = Media::getType(ps.cb.GetToken(1));
-	if (mt == MediaType::UnknownType) {
-	}	
-
-	Media* mptr;
-	switch (mt) {
-	case MediaType::Videogame:
-		mptr = Videogame::usercreated();
-		break;
-	case MediaType::Movie:
-		mptr = Movie::usercreated();
-		break;
-	case MediaType::Music:
-		mptr = Music::usercreated();
-		break;
-	default:	
-		printf("Couldn't determine \"%s\" as a media type!\n", ps.cb.GetToken(1));
-		return;
-	}
-	printf("Got pointer: %p\n", mptr);
-	delete mptr; // TODO: Add to vector instead!
-}
-
-void CmdToggle(ProgState& ps) {
-	if (ps.cb.Tokens() < 2) {
-		printf("Expected a column argument: \" toggle [column]\"\n");
-		return;
-	}
-	const Media::Var mv = Media::getVar(std::string(ps.cb.GetToken(1)));
-	if (mv == Media::Var::NotFound) {
-		printf("\"%s\" is not a known media type!\n", ps.cb.GetToken(1));
-		return;
-	}
-	for (size_t i=0;i<TableState::COL_CT;i++) {
-		if (TableState::COL_VARS[i] == mv) {
-			ps.ts.COL_ENABLED[i] = !ps.ts.COL_ENABLED[i];
-			printf("Toggled visibility of %s!\n", TableState::COL_NAMES[i]);
+	// Add different types of media, delegating to the Derived::usercreated() method to instantiate.
+	void Add(ProgState& ps) { // TODO: Implement usercreated funcs in media type classes.
+		if (ps.cb.Tokens() < 2) {
+			printf("Expected a type: \"add [type]\" (videogame, movie, music)\n");
+			return;
+		} else if (ps.cb.Tokens() > 2) {
+			printf("Unexpected additional tokens!\n");
 			return;
 		}
+		MediaType mt = Media::getType(ps.cb.GetToken(1));
+		if (mt == MediaType::UnknownType) {
+		}	
+
+		Media* mptr;
+		switch (mt) {
+		case MediaType::Videogame:
+			mptr = Videogame::usercreated();
+			break;
+		case MediaType::Movie:
+			mptr = Movie::usercreated();
+			break;
+		case MediaType::Music:
+			mptr = Music::usercreated();
+			break;
+		default:	
+			printf("Couldn't determine \"%s\" as a media type!\n", ps.cb.GetToken(1));
+			return;
+		}
+		printf("Got pointer: %p\n", mptr);
+		delete mptr; // TODO: Add to vector instead!
 	}
-	printf("%s: %s, didn't find what should've been a match!\n", __FILE__, __LINE__);
-} 
 
-void CmdEnableCols(ProgState& ps) {
-	for (size_t i=0;i<TableState::COL_CT;i++) ps.ts.COL_ENABLED[i] = true;
-	printf("All columns visible!\n");
-}
+	void Toggle(ProgState& ps) {
+		if (ps.cb.Tokens() < 2) {
+			printf("Expected a column argument: \" toggle [column]\"\n");
+			return;
+		}
+		const Media::Var mv = Media::getVar(std::string(ps.cb.GetToken(1)));
+		if (mv == Media::Var::NotFound) {
+			printf("\"%s\" is not a known media type!\n", ps.cb.GetToken(1));
+			return;
+		}
+		for (size_t i=0;i<TableState::COL_CT;i++) {
+			if (TableState::COL_VARS[i] == mv) {
+				ps.ts.COL_ENABLED[i] = !ps.ts.COL_ENABLED[i];
+				printf("Toggled visibility of %s!\n", TableState::COL_NAMES[i]);
+				return;
+			}
+		}
+		printf("%s: %i, didn't find what should've been a match!\n", __FILE__, __LINE__);
+	} 
 
-// Restore media vector to a copy of instances in the original vector (uses copy constructor).
-void CmdDefault(ProgState& ps) {
-	ps.medias.clear();
-	ps.medias.reserve(ps.originals.size());
-
-// Cast to a derived type, run the derived class' copy constructor and insert the copied instance into the new media vector.
-#define TRYCOPY(BASEPTR, DERIVED) try { const DERIVED* DERIVED##_ptr = dynamic_cast<DERIVED*>(BASEPTR); \
-if ( DERIVED##_ptr !=0 ) { \
-	ps.medias.push_back( new DERIVED(*( DERIVED##_ptr )) ); \
-	continue; \
-} } catch (...) {} 
-
-	for (auto it = ps.originals.begin(); it != ps.originals.end(); ++it) {
-		Media* mptr = *it;
-		TRYCOPY(mptr, Videogame);
-		TRYCOPY(mptr, Music);
-		TRYCOPY(mptr, Movie);
+	void EnableCols(ProgState& ps) {
+		for (size_t i=0;i<TableState::COL_CT;i++) ps.ts.COL_ENABLED[i] = true;
+		printf("All columns visible!\n");
 	}
-#undef TRYCOPY
-	
-	printf("Media reset to default %u elements!\n", ps.medias.size());
-}
 
-// Clear all medias (TODO: Implement as wildcard * in delete command!)
-void CmdClear(ProgState& ps) {
-	ps.medias.clear();
-	printf("Medias cleared, %u elements!\n", ps.medias.size());
-}
+	// Restore media vector to a copy of instances in the original vector (uses copy constructor).
+	void Default(ProgState& ps) {
+		ps.medias.clear();
+		ps.medias.reserve(ps.originals.size());
 
-const std::unordered_map<std::string, CommandDefinition> cmd_map = { // keys are commands for user
-	{       "quit", { CmdQuit, "", "Ends the program." }},
-	{      "print", { CmdPrint, "", "Lists all the media." }},
-	{       "size", { CmdSize, "", "Prints out the size of default media and current media groups." }},
-	{       "help", { CmdHelp, "", "this" }},
-	{       "sort", { CmdSort, "[var]", "Sorts the media by the given variable (type, title, year...) (Ascending)" }},
-	{     "search", { CmdSearch, "[keyword]", "Search through media for given keyword." }},
-	{     "delete", { CmdDelete, "[mode] [keyword]", "Remove media matching the given (type, search) and (type/keyword) pair." }}, 
-	{    "default", { CmdDefault, "", "Resets media back to default. Deletes new entries and restores removed defaults." }},
-	{        "add", { CmdAdd, "[type]", "Add media of specified type, will prompt for properties and preview." }}, 
-	{     "toggle", { CmdToggle, "[column]", "Toggle the visibility of specified column."}},
-	{ "enablecols", { CmdEnableCols, "", "Enables visibility of all columns."}},
-	{      "clear", { CmdClear, "", "Clears the media list. Removes all medias." }},
-};
+	// Cast to a derived type, run the derived class' copy constructor and insert the copied instance into the new media vector.
+	#define TRYCOPY(BASEPTR, DERIVED) try { const DERIVED* DERIVED##_ptr = dynamic_cast<DERIVED*>(BASEPTR); \
+	if ( DERIVED##_ptr !=0 ) { \
+		ps.medias.push_back( new DERIVED(*( DERIVED##_ptr )) ); \
+		continue; \
+	} } catch (...) {} 
 
-void CmdHelp(ProgState& ps) {
-	const char* const prefix = "	";
-	printf("Help:\n");
-	size_t maxlen = 0; // strlen(cmd) + 1 + strlen(args)
-	for (auto it = cmd_map.cbegin();it!=cmd_map.cend();++it) {
-		size_t len = it->first.length() + 1 + it->second.args.length();
-		if (len > maxlen) maxlen = len;
+		for (auto it = ps.originals.begin(); it != ps.originals.end(); ++it) {
+			Media* mptr = *it;
+			TRYCOPY(mptr, Videogame);
+			TRYCOPY(mptr, Music);
+			TRYCOPY(mptr, Movie);
+		}
+	#undef TRYCOPY
+		
+		printf("Media reset to default %u elements!\n", ps.medias.size());
 	}
-	char cmddef[maxlen+1]; // allow for null terminating char
-	for (auto it = cmd_map.cbegin();it!=cmd_map.cend();++it) {
-		const std::string& args = it->second.args;
-		snprintf(cmddef, maxlen+1, args.length()<1 ? "%s":"%s %s", it->first.c_str(), args.c_str());
-		printf("%*s - %s\n", maxlen, cmddef, it->second.help.c_str());
+
+	// Clear all medias (TODO: Implement as wildcard * in delete command!)
+	void Clear(ProgState& ps) {
+		ps.medias.clear();
+		printf("Medias cleared, %u elements!\n", ps.medias.size());
+	}
+
+	void Help(ProgState& ps) {
+		const char* const prefix = "	";
+		printf("Help:\n");
+		size_t maxlen = 0; // strlen(cmd) + 1 + strlen(args)
+		for (auto it = cmd_map.cbegin();it!=cmd_map.cend();++it) {
+			size_t len = it->first.length() + 1 + it->second.args.length();
+			if (len > maxlen) maxlen = len;
+		}
+		char cmddef[maxlen+1]; // allow for null terminating char
+		for (auto it = cmd_map.cbegin();it!=cmd_map.cend();++it) {
+			const std::string& args = it->second.args;
+			snprintf(cmddef, maxlen+1, args.length()<1 ? "%s":"%s %s", it->first.c_str(), args.c_str());
+			printf("%*s - %s\n", maxlen, cmddef, it->second.help.c_str());
+		}
 	}
 }
 
@@ -369,7 +356,7 @@ int main() {
 		if (ps.cb.Tokens() < 1) continue; // If no tokens are passed, skip loop.
 		std::string cmd = tolowercase(ps.cb.GetToken(0)); // Commands are case-INSENSITIVE.
 		try { // Try to find the user's command!
-			CommandDefinition::Function func = cmd_map.at(cmd).func; // Find command function from key.
+			CommandDefinition::Function func = Command::cmd_map.at(cmd).func; // Find command function from key.
 			func(ps); // Call found function using the current ProgState 
 		} catch (...) { printf("\"%s\" is not a known command!\n", ps.cb.GetToken(0)); } // When key is not found in map.
 	}	

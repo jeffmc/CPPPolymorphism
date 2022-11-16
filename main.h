@@ -15,7 +15,7 @@ const char* getMediaTypeStr(const MediaType &mt); // Return a cstring label for 
 // Static members also determine left-align, number of columns, column titles, and enums.
 struct TableState {
 public:
-	static constexpr int COL_CT = 7;
+	static constexpr int COL_CT = 7; // TODO: COMPILATION ERROR: UNDEFINED REF TO THESE IN printHeader() ???
 	static constexpr bool COL_LA[COL_CT]     = {false, false, false, true, false, false, true };
 	// TODO: Unify this definition and the names within map in Media::getStrVarMap();
 	static constexpr const char* COL_NAMES[COL_CT] = {"Type", "Title", "Year", "Creator", "Rating", "Duration", "Publisher" };
@@ -56,15 +56,32 @@ struct CommandDefinition {
 };
 
 // Commands TODO: Put in their own namespace!
-void CmdSort(ProgState& ps); // Sort the media by a given column variable, look at Media::cmp(...)
-void CmdSize(ProgState& ps); // Print out the size of media vectors (defaults and current)
-void CmdSearch(ProgState& ps); // Search through medias using the specified token, leaves vector unchanged.
-void CmdDelete(ProgState& ps); // Delete medias given a specified search key
-void CmdPrint(ProgState& ps); // Prints out the table header and content for all medias.
-void CmdQuit(ProgState& ps); // Quits program as long as additional arguments aren't accidentally passed.
-void CmdAdd(ProgState& ps); // Add different types of media, using Derived::usercreated() to instantiate.
-void CmdToggle(ProgState& ps); // Toggle the visibility of the selected column
-void CmdEnableCols(ProgState& ps); // Enable visibility of all columns
-void CmdDefault(ProgState& ps); // Copies from defaults into current.
-void CmdClear(ProgState& ps); // Clear all medias (TODO: Implement as wildcard * in delete command!)
-void CmdHelp(ProgState& ps); // Prints command keywords, arguments, and descriptions
+namespace Command {
+	void Sort(ProgState& ps);       // Sort the media by a given column variable, look at Media::cmp(...)
+	void Size(ProgState& ps);       // Print out the size of media vectors (defaults and current)
+	void Search(ProgState& ps);     // Search through medias using the specified token, leaves vector unchanged.
+	void Delete(ProgState& ps);     // Delete medias given a specified search key
+	void Print(ProgState& ps);      // Prints out the table header and content for all medias.
+	void Quit(ProgState& ps);       // Quits program as long as additional arguments aren't accidentally passed.
+	void Add(ProgState& ps);        // Add different types of media, using Derived::usercreated() to instantiate.
+	void Toggle(ProgState& ps);     // Toggle the visibility of the selected column
+	void EnableCols(ProgState& ps); // Enable visibility of all columns
+	void Default(ProgState& ps);    // Copies from defaults into current.
+	void Clear(ProgState& ps);      // Clear all medias (TODO: Implement as wildcard * in delete command!)
+	void Help(ProgState& ps);       // Prints command keywords, arguments, and descriptions
+
+	const std::unordered_map<std::string, CommandDefinition> cmd_map = { // TODO: Eliminate usage of std::string
+		{       "quit", { Quit,       "", "Ends the program." }},
+		{      "print", { Print,      "", "Lists all the media." }},
+		{       "size", { Size,       "", "Prints out the size of default media and current media groups." }},
+		{       "help", { Help,       "", "this" }},
+		{       "sort", { Sort,       "[var]", "Sorts the media by the given variable (type, title, year...) (Ascending)" }},
+		{     "search", { Search,     "[keyword]", "Search through media for given keyword." }},
+		{     "delete", { Delete,     "[mode] [keyword]", "Remove media matching the given (type, search) and (type/keyword) pair." }}, 
+		{    "default", { Default,    "", "Resets media back to default. Deletes new entries and restores removed defaults." }},
+		{        "add", { Add,        "[type]", "Add media of specified type, will prompt for properties and preview." }}, 
+		{     "toggle", { Toggle,     "[column]", "Toggle the visibility of specified column."}},
+		{ "enablecols", { EnableCols, "", "Enables visibility of all columns."}},
+		{      "clear", { Clear,      "", "Clears the media list. Removes all medias." }},
+	};
+}

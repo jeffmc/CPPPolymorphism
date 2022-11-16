@@ -10,8 +10,7 @@
 const char* CommandBuf::GetRaw() const { return m_Raw.c_str(); }
 const char* CommandBuf::GetToken(size_t i) const { return m_Tokens[i].c_str(); }
 const size_t CommandBuf::Tokens() const { return m_Tokens.size(); }	
-	
-// 
+	 
 void CommandBuf::operator()(const char* prefix) {	
 	m_Raw = {};
 	printf("%s", prefix);
