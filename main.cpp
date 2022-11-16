@@ -4,16 +4,13 @@
 // The user can add, search, and delete media from the database (vector). The user may also quit the program.
 // In addition to those commands, the user may also print out all media, sort the media by column, toggle column visibility, 
 
-#include <iostream> // console interaction
 #include <vector> // storing media pointers
 #include <cstdio> // lots
 #include <cstdlib> // lots
-#include <cctype> // Lowercasing
 #include <algorithm> // Manipulation of vectors
 #include <iterator> // For Media iterators
 
 #include <unordered_map> // Pair command keyword with its function pointer.
-#include <string> // For command input/output, detecting keywords
 
 #include "main.h" // Global function declarations, a few structs.
 
@@ -125,7 +122,6 @@ void printMedias(const TableState& ts, const std::vector<Media*> &medias) {
 }
 
 namespace Command {
-
 	void Sort(ProgState& ps) { // Sort the media by a given column variable, look at Media::cmp(...)
 		if (ps.cb.Tokens() < 2) {
 			printf("\"sort [variable]\": expected a sort variable!\n");
