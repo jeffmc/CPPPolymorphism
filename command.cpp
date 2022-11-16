@@ -1,5 +1,4 @@
 #include <iostream>
-#include <string>
 #include <vector>
 #include <limits>
 
@@ -10,6 +9,8 @@
 const char* CommandBuf::GetRaw() const { return m_Raw.c_str(); }
 const char* CommandBuf::GetToken(size_t i) const { return m_Tokens[i].c_str(); }
 const size_t CommandBuf::Tokens() const { return m_Tokens.size(); }	
+
+static COMMANDBUFSIZE = 4096;
 	 
 void CommandBuf::operator()(const char* prefix) {	
 	m_Raw = {};
