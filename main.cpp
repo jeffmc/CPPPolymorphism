@@ -3,7 +3,6 @@
 // This is a user-managed database of information related to different types of media.
 // The user can add, search, and delete media from the database (vector). The user may also quit the program.
 // In addition to those commands, the user may also print out all media, sort the media by column, toggle column visibility, 
-
 #include <vector> // storing media pointers
 #include <cstdio> // lots
 #include <cstdlib> // lots
@@ -79,7 +78,7 @@ void printMedias(const TableState& ts, const std::vector<Media*> &medias) {
 		MediaType mt = getMediaTypeFromPtr(mptr);
 		const char* mts = getMediaTypeStr(mt);
 	
-		#define STR_COL(idx, cptr) if (ts.COL_ENABLED[idx]) printf("%*.*s ", ts.COL_WIDTH[idx], ts.COL_WIDTH[idx], cptr);	
+		#define STR_COL(idx, cptr) if (ts.COL_ENABLED[idx]) printf("%*.*s ", ts.COL_WIDTH[idx], ts.COL_WIDTH[idx], cptr);
 		STR_COL(0, mts);
 		STR_COL(1, mptr->getTitle());
 		if (ts.COL_ENABLED[2]) {
@@ -128,7 +127,7 @@ namespace Command {
 			return;	
 		}
 
-		Media::Var sortvar = Media::getVar(ps.cb.GetToken(1));
+		Media::Var sortvar = Media::getVar(ps.cb.GetLowerToken(1));
 		if (sortvar == Media::Var::NotFound) {
 			printf("\"%s\" not a valid media variable!\n", ps.cb.GetToken(1));
 			return;
@@ -184,7 +183,7 @@ namespace Command {
 			printf("Expected a mode: \"delete [search/type] [...]\"\n");
 			return;
 		}
-		const char* var = ps.cb.GetToken(1);
+		const char* var = ps.cb.GetLowerToken(1);
 		if (strcmp(var,"search")==0) {
 			if (ps.cb.Tokens() < 3) {
 				printf("Expected a search key: \"delete search [key]\"\n");
@@ -197,7 +196,7 @@ namespace Command {
 				printf("Expected a type: \"delete search [type]\" (%s)\n", CSVMEDIATYPES);
 				return;
 			}
-			const char* typestr = ps.cb.GetToken(2);
+			const char* typestr = ps.cb.GetLowerToken(2);
 			const MediaType type = Media::getType(typestr);
 			if (type == MediaType::UnknownType) {
 				printf("\"%s\" is not a valid media type!\n", typestr);
@@ -237,7 +236,7 @@ namespace Command {
 			printf("Unexpected additional tokens!\n");
 			return;
 		}
-		MediaType mt = Media::getType(ps.cb.GetToken(1));
+		MediaType mt = Media::getType(ps.cb.GetLowerToken(1));
 		if (mt == MediaType::UnknownType) {
 		}	
 
@@ -265,7 +264,7 @@ namespace Command {
 			printf("Expected a column argument: \" toggle [column]\"\n");
 			return;
 		}
-		const Media::Var mv = Media::getVar(std::string(ps.cb.GetToken(1)));
+		const Media::Var mv = Media::getVar(ps.cb.GetLowerToken(1));
 		if (mv == Media::Var::NotFound) {
 			printf("\"%s\" is not a known media type!\n", ps.cb.GetToken(1));
 			return;
@@ -319,29 +318,19 @@ namespace Command {
 		printf("Help:\n");
 		size_t maxlen = 0; // strlen(cmd) + 1 + strlen(args)
 		for (auto it = cmd_map.cbegin();it!=cmd_map.cend();++it) {
-			size_t len = it->first.length() + 1 + it->second.args.length();
+			size_t len = strlen(it->first.ptr) + 1 + strlen(it->second.args);
 			if (len > maxlen) maxlen = len;
 		}
 		char cmddef[maxlen+1]; // allow for null terminating char
-		for (auto it = cmd_map.cbegin();it!=cmd_map.cend();++it) {
-			const std::string& args = it->second.args;
-			snprintf(cmddef, maxlen+1, args.length()<1 ? "%s":"%s %s", it->first.c_str(), args.c_str());
-			printf("%*s - %s\n", maxlen, cmddef, it->second.help.c_str());
+		for (auto it = cmd_map.cbegin();it!=cmd_map.cend();++it) {	
+			snprintf(cmddef, maxlen+1, strlen(it->second.args)<1 ? "%s":"%s %s", it->first.ptr, it->second.args);
+			printf("%*s - %s\n", maxlen, cmddef, it->second.help);
 		}
 	}
-}
-
-// TODO: DESTROY THIS FUNCTION OR REWRITE FOR CSTRINGS!!!
-// Return a string that is lowercase.
-std::string tolowercase(const std::string& old) {
-	std::string lowered = old;
-	for (auto it=lowered.begin();it!=lowered.end();++it) {
-		*it = std::tolower(*it);
-	}
-	return lowered;
-}
+};
 
 int main() {
+
 	// Instantiate default TableState, program is running, default CommandBuf, default originals, and blank currents.
 	ProgState ps = { // Since all command functions receive same arguments, this is the single common arg.
 		TableState(), true, CommandBuf(), makeDefaultMedias(), {}
@@ -350,9 +339,9 @@ int main() {
 	while (ps.running) { // Keep prompting for commands as long as user hasn't ended program/
 		ps.cb("> "); // Prompt user for input
 		if (ps.cb.Tokens() < 1) continue; // If no tokens are passed, skip loop.
-		std::string cmd = tolowercase(ps.cb.GetToken(0)); // Commands are case-INSENSITIVE.
+		const char* cmd = ps.cb.GetLowerToken(0); // Commands are case-INSENSITIVE.
 		try { // Try to find the user's command!
-			CommandDefinition::Function func = Command::cmd_map.at(cmd).func; // Find command function from key.
+			CommandDefinition::Function func = Command::cmd_map.at({cmd}).func; // Find command function from key.
 			func(ps); // Call found function using the current ProgState 
 		} catch (...) { printf("\"%s\" is not a known command!\n", ps.cb.GetToken(0)); } // When key is not found in map.
 	}	

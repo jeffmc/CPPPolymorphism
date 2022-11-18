@@ -1,6 +1,5 @@
 #pragma once
 #include <unordered_map>
-#include <string> 
 
 #include "types.h"
 
@@ -23,12 +22,12 @@ public:
 	Media(const Media& o); // Copy constructor
 	virtual ~Media(); // Virtual destructor, is good for polymorphic types!
 	
-	static const std::unordered_map<std::string, MediaType>& getStrTypeMap(); // Return a static const map of strings to MediaType enums
-	static MediaType getType(const std::string& key); // Get a MediaType from a string
+	static const std::unordered_map<cstrkey, MediaType>& getStrTypeMap(); // Return a static const map of strings to MediaType enums
+	static MediaType getType(const char* key); // Get a MediaType from a string
 
 	enum class Var { Type, Title, Year, Rating, Duration, Creator, Publisher, NotFound }; // Enum of columns 
-	static const std::unordered_map<std::string, Var>& getStrVarMap(); // Map of string to Media::Var 
-	static Var getVar(const std::string& key); // Get Media::Var by string
+	static const std::unordered_map<cstrkey, Var>& getStrVarMap(); // Map of string to Media::Var 
+	static Var getVar(const char* key); // Get Media::Var by string
 	
 	// Compare two medias "a" and "b" using variable "v".
 	static int cmp(const Var v, const Media* a, const Media* b); 

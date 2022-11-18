@@ -13,10 +13,28 @@ struct Duration {	// Custom type for media variables.
 		: hours(hours), mins(mins), secs(secs) { };
 	static int cmp(const Duration &a, const Duration &b); // Defined in main.cpp
 };
-// struct Date { // TODO: Implement?
-// 	unsigned long year; //0-infinity (sorry BC)
-// 	unsigned char days, month; // 1-31, 1-11
-// };
+
+struct cstrkey {
+	const char* const ptr; 
+	
+	bool operator==(const cstrkey& o) const { 
+		return strcmp(ptr, o.ptr) == 0;
+	}
+};
+
+// Borrowed from https://stackoverflow.com/a/7666577
+template<>
+struct std::hash<cstrkey> {
+	std::size_t operator()(const cstrkey& val) const { 
+		const char* str = val.ptr; 
+		unsigned long hash = 5381;
+		int c;
+		while (c = *str++)
+			hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
+
+		return hash;
+	}
+};
 
 typedef const char*const const_cstr; // Const pointer to const cstring
 typedef unsigned int uint; // unsigned int 

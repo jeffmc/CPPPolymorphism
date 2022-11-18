@@ -1,6 +1,8 @@
 #pragma once
 
 #include <vector>
+
+#include "types.h"
 #include "media.h"
 #include "command.h"
 
@@ -51,8 +53,8 @@ struct ProgState {
 struct CommandDefinition {
 	using Function = void(*)(ProgState&); // Called when key is found in 0th arg of CommandBuf
 	const Function func;
-	const std::string args;
-	const std::string help;	
+	const char* const args;
+	const char* const help;	
 };
 
 // Commands TODO: Put in their own namespace!
@@ -70,18 +72,18 @@ namespace Command {
 	void Clear(ProgState& ps);      // Clear all medias (TODO: Implement as wildcard * in delete command!)
 	void Help(ProgState& ps);       // Prints command keywords, arguments, and descriptions
 
-	const std::unordered_map<std::string, CommandDefinition> cmd_map = { // TODO: Eliminate usage of std::string
-		{       "quit", { Quit,       "", "Ends the program." }},
-		{      "print", { Print,      "", "Lists all the media." }},
-		{       "size", { Size,       "", "Prints out the size of default media and current media groups." }},
-		{       "help", { Help,       "", "this" }},
-		{       "sort", { Sort,       "[var]", "Sorts the media by the given variable (type, title, year...) (Ascending)" }},
-		{     "search", { Search,     "[keyword]", "Search through media for given keyword." }},
-		{     "delete", { Delete,     "[mode] [keyword]", "Remove media matching the given (type, search) and (type/keyword) pair." }}, 
-		{    "default", { Default,    "", "Resets media back to default. Deletes new entries and restores removed defaults." }},
-		{        "add", { Add,        "[type]", "Add media of specified type, will prompt for properties and preview." }}, 
-		{     "toggle", { Toggle,     "[column]", "Toggle the visibility of specified column."}},
-		{ "enablecols", { EnableCols, "", "Enables visibility of all columns."}},
-		{      "clear", { Clear,      "", "Clears the media list. Removes all medias." }},
+	const std::unordered_map<cstrkey, CommandDefinition> cmd_map = {
+		{       {"quit"}, { Quit,       "", "Ends the program." }},
+		{      {"print"}, { Print,      "", "Lists all the media." }},
+		{       {"size"}, { Size,       "", "Prints out the size of default media and current media groups." }},
+		{       {"help"}, { Help,       "", "this" }},
+		{       {"sort"}, { Sort,       "[var]", "Sorts the media by the given variable (type, title, year...) (Ascending)" }},
+		{     {"search"}, { Search,     "[keyword]", "Search through media for given keyword." }},
+		{     {"delete"}, { Delete,     "[mode] [keyword]", "Remove media matching the given (type, search) and (type/keyword) pair." }}, 
+		{    {"default"}, { Default,    "", "Resets media back to default. Deletes new entries and restores removed defaults." }},
+		{        {"add"}, { Add,        "[type]", "Add media of specified type, will prompt for properties and preview." }}, 
+		{     {"toggle"}, { Toggle,     "[column]", "Toggle the visibility of specified column."}},
+		{ {"enablecols"}, { EnableCols, "", "Enables visibility of all columns."}},
+		{      {"clear"}, { Clear,      "", "Clears the media list. Removes all medias." }},
 	};
 }

@@ -43,7 +43,6 @@ void CommandBuf::operator()(const char* prefix) {
 			++moving;
 		} else { // If non-whitespace
 			m_Tokens.push_back(moving); // Add the start to vec
-			printf("Found start: '%c'\n", *moving);
 			while ( ( !isspace(*moving) ) && (*moving) ) ++moving; // Move till whitespace/end.
 			if (*moving) { // If not already at end
 				*moving = '\0'; // Mark end of token with null char
