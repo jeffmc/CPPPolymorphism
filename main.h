@@ -57,7 +57,7 @@ struct CommandDefinition {
 	const char* const help;	
 };
 
-// Commands TODO: Put in their own namespace!
+// Commands 
 namespace Command {
 	void Sort(ProgState& ps);       // Sort the media by a given column variable, look at Media::cmp(...)
 	void Size(ProgState& ps);       // Print out the size of media vectors (defaults and current)
@@ -69,8 +69,8 @@ namespace Command {
 	void Toggle(ProgState& ps);     // Toggle the visibility of the selected column
 	void EnableCols(ProgState& ps); // Enable visibility of all columns
 	void Default(ProgState& ps);    // Copies from defaults into current.
-	void Clear(ProgState& ps);      // Clear all medias (TODO: Implement as wildcard * in delete command!)
 	void Help(ProgState& ps);       // Prints command keywords, arguments, and descriptions
+	void Buckets(ProgState& ps);    // Prints out info about cmd_map buckets.
 
 	const std::unordered_map<cstrkey, CommandDefinition> cmd_map = {
 		{       {"quit"}, { Quit,       "", "Ends the program." }},
@@ -79,11 +79,11 @@ namespace Command {
 		{       {"help"}, { Help,       "", "this" }},
 		{       {"sort"}, { Sort,       "[var]", "Sorts the media by the given variable (type, title, year...) (Ascending)" }},
 		{     {"search"}, { Search,     "[keyword]", "Search through media for given keyword." }},
-		{     {"delete"}, { Delete,     "[mode] [keyword]", "Remove media matching the given (type, search) and (type/keyword) pair." }}, 
+		{     {"delete"}, { Delete,     "[mode] [keyword]", "Remove media matching the given (*, type, search) and (type/keyword) pair." }}, 
 		{    {"default"}, { Default,    "", "Resets media back to default. Deletes new entries and restores removed defaults." }},
 		{        {"add"}, { Add,        "[type]", "Add media of specified type, will prompt for properties and preview." }}, 
 		{     {"toggle"}, { Toggle,     "[column]", "Toggle the visibility of specified column."}},
 		{ {"enablecols"}, { EnableCols, "", "Enables visibility of all columns."}},
-		{      {"clear"}, { Clear,      "", "Clears the media list. Removes all medias." }},
+		{    {"buckets"}, { Buckets,    "", "Print out information about command map's buckets."}},
 	};
 }

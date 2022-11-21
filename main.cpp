@@ -63,7 +63,7 @@ int Duration::cmp(const Duration &a, const Duration &b) {
 }
 
 // Swap two elements at given indices within a vector.
-template<typename T> // MAY HAVE TO REMOVE THIS LINE IN ORDER TO COMPILE!
+template<typename T> 
 void vecswap(std::vector<T> &v, const size_t a, const size_t b) {
 	T tmp = v[a];
 	v[a] = v[b];
@@ -180,11 +180,18 @@ namespace Command {
 	void Delete(ProgState& ps) {
 		static const char* const CSVMEDIATYPES = "videogame, movie, music"; // Create this dynamically 
 		if (ps.cb.Tokens() < 2) {
-			printf("Expected a mode: \"delete [search/type] [...]\"\n");
+			printf("Expected a mode: \"delete [*/search/type] [...]\"\n");
 			return;
 		}
 		const char* var = ps.cb.GetLowerToken(1);
-		if (strcmp(var,"search")==0) {
+		if (strcmp(var,"*")==0) {
+			if (ps.cb.Tokens() != 2) {
+				printf("Wildcard doesn't allow additional arguments!\n");
+				return;
+			}
+			ps.medias.clear();
+			printf("All medias deleted!\n", ps.medias.size());
+		} else if (strcmp(var,"search")==0) {
 			if (ps.cb.Tokens() < 3) {
 				printf("Expected a search key: \"delete search [key]\"\n");
 				return;
@@ -306,11 +313,19 @@ namespace Command {
 		
 		printf("Media reset to default %u elements!\n", ps.medias.size());
 	}
-
-	// Clear all medias (TODO: Implement as wildcard * in delete command!)
-	void Clear(ProgState& ps) {
-		ps.medias.clear();
-		printf("Medias cleared, %u elements!\n", ps.medias.size());
+	
+	void Buckets(ProgState& ps) {
+		printf("Max Size: %u, Max Buckets: %u, Max Load Factor: %f\n", 
+			cmd_map.max_size(),cmd_map.max_bucket_count(),cmd_map.max_load_factor());	
+		const size_t buckets = cmd_map.bucket_count();
+		printf("Size: %u, Buckets: %u, Load Factor: %f\n", cmd_map.size(),buckets,cmd_map.load_factor());
+		for (size_t i=0;i<buckets;i++) {
+			printf("Bucket %u:", i);
+			for (auto bckt_it = cmd_map.cbegin(i);bckt_it!=cmd_map.cend(i);++bckt_it) {
+				printf(" %s", bckt_it->first.ptr);
+			}
+			printf("\n");
+		}
 	}
 
 	void Help(ProgState& ps) {

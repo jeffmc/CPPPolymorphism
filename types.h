@@ -14,6 +14,7 @@ struct Duration {	// Custom type for media variables.
 	static int cmp(const Duration &a, const Duration &b); // Defined in main.cpp
 };
 
+// Used as key in std::unordered_map
 struct cstrkey {
 	const char* const ptr; 
 	
