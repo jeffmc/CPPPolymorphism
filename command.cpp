@@ -1,11 +1,11 @@
 #include <iostream>
 #include <vector>
-#include <limits>
 #include <cstring>
 #include <cctype>
 
 // Description of class found there.
 #include "command.h"
+#include "types.h" // CSTR_GETLINE macro
 
 // Getters
 const char* CommandBuf::GetRaw() const { return m_Raw; }
@@ -29,8 +29,9 @@ void CommandBuf::operator()(const char* prefix) {
 	// Take raw input (TODO: Filter characters using isprint() )
 	char* raw = new char[CMDBUFSIZE];
 	printf("%s", prefix);
-	std::cin.get(raw, CMDBUFSIZE);
-	std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+	CSTR_GETLINE(raw, CMDBUFSIZE);
+
 	m_Raw = raw;
 
 	// Make tokenized

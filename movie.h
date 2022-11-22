@@ -8,6 +8,9 @@ private:
 	char* director;
 	Duration duration;
 	float rating;
+
+	Movie();
+
 public:
 	// Construct from values
 	Movie(const_cstr& title, const uint& year,

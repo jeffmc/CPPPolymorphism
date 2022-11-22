@@ -3,6 +3,9 @@
 
 #include "media.h"
 
+// Default cons
+Media::Media() : title(nullptr) {}
+
 // Value constructor, copies arguments.
 Media::Media(const_cstr& title, const uint& year) : year(year) {
 	ALLOCCPY(title);

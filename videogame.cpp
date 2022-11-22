@@ -1,5 +1,7 @@
 #include "videogame.h"
 
+Videogame::Videogame() : Media(), publisher(nullptr) {}
+
 Videogame::Videogame(const_cstr& title, const uint& year,
 	const_cstr publisher, const float& rating)
 	: Media(title, year), rating(rating)
@@ -23,5 +25,19 @@ bool Videogame::search(const char* key) const {
 		|| strstr(publisher,key);
 } 
 Videogame* Videogame::usercreated() {
-	return nullptr;
+	Videogame* ptr = new Videogame;
+	if (!Media::usercreated(ptr)) return nullptr;
+
+	static const size_t BUFSIZE = 256;
+	char* input = new char[BUFSIZE]; // User-created medias will be incredibly inefficient in heap usage.
+	
+	printf("Rating: ");
+	CSTR_GETLINE(input, BUFSIZE);
+	ptr->rating = strtof(input, NULL);
+	
+	printf("Publisher: ");
+	CSTR_GETLINE(input, BUFSIZE);
+	ptr->publisher = input; // Don't delete or reassign unless inputting additional fields in future
+
+	return ptr;
 }

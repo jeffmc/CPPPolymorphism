@@ -1,5 +1,7 @@
 #include "music.h"
 
+Music::Music() : Media(), artist(nullptr), publisher(nullptr) {}
+
 Music::Music(const_cstr& title, const uint& year,
 	const_cstr& artist, const_cstr& publisher, const Duration& duration)
 	: Media(title,year), duration(duration)
@@ -29,5 +31,22 @@ bool Music::search(const char* key) const {
 } 
 
 Music* Music::usercreated() {
-	return nullptr;
+	Music* ptr = new Music;
+	if (!Media::usercreated(ptr)) return nullptr;
+	static const size_t BUFSIZE = 256;
+	char* input = new char[BUFSIZE]; // User-created medias will be incredibly inefficient in heap usage.
+
+	printf("Artist: ");
+	CSTR_GETLINE(input, BUFSIZE);
+	ptr->artist = input;
+	input = new char[BUFSIZE]; // last alloc now belongs to instance
+
+	printf("Duration:\n");
+	ptr->duration = Duration::usercreated("    ");
+	
+	printf("Publisher: ");
+	CSTR_GETLINE(input, BUFSIZE);
+	ptr->publisher = input; // Don't delete or reassign unless inputting additional fields in future
+
+	return ptr;
 }

@@ -7,8 +7,12 @@ private:
 	// Variables specific to Music, not implemented in Media base.
 	char *artist, *publisher;
 	Duration duration;
+	
+	// Default constructor
+	Music();
 
 public:
+
 	// Construct from values
 	Music(const_cstr& title, const uint& year,
 		const_cstr& artist, const_cstr& publisher, const Duration& duration);

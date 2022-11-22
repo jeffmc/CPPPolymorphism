@@ -77,7 +77,9 @@ void printMedias(const TableState& ts, const std::vector<Media*> &medias) {
 		Media* mptr = *it;
 		MediaType mt = getMediaTypeFromPtr(mptr);
 		const char* mts = getMediaTypeStr(mt);
-	
+
+		static const char* const DIV = " | ";
+
 		#define STR_COL(idx, cptr) if (ts.COL_ENABLED[idx]) printf("%*.*s ", ts.COL_WIDTH[idx], ts.COL_WIDTH[idx], cptr);
 		STR_COL(0, mts);
 		STR_COL(1, mptr->getTitle());
@@ -87,31 +89,31 @@ void printMedias(const TableState& ts, const std::vector<Media*> &medias) {
 		if (ts.COL_ENABLED[3]) {
 			const char* str = mptr->getCreator();
 			if (str != nullptr) {
-				printf("%-*.*s ", ts.COL_WIDTH[3], ts.COL_WIDTH[3], str);
+				printf("%-*.*s%s", ts.COL_WIDTH[3], ts.COL_WIDTH[3], str, DIV);
 			} else {
-				printf("%*c ", ts.COL_WIDTH[3], ' ');
+				printf("%*c%s", ts.COL_WIDTH[3], ' ', DIV);
 			}
 		}
 		if (ts.COL_ENABLED[4]) {
 			const float* rat = mptr->getRating();
 			if (rat != nullptr) {
-				printf("%*.*f ", ts.COL_WIDTH[4], 1, *rat);
+				printf("%*.*f%s", ts.COL_WIDTH[4], 1, *rat, DIV);
 			} else {
-				printf("%*c ", ts.COL_WIDTH[4], ' ');
+				printf("%*c%s", ts.COL_WIDTH[4], ' ', DIV);
 			}
 		}
 		if (ts.COL_ENABLED[5]) {
 			const Duration* dur = mptr->getDuration();
 			if (dur != nullptr) {
-				printf("%*u:%0*u:%0*u ", 3, dur->hours, 2, dur->mins, 2, dur->secs);
+				printf("%*u:%0*u:%0*u%s", 3, dur->hours, 2, dur->mins, 2, dur->secs, DIV);
 			} else {
-				printf("%*c ", ts.COL_WIDTH[5], ' ');
+				printf("%*c%s", ts.COL_WIDTH[5], ' ', DIV);
 			}
 		}
 		if (ts.COL_ENABLED[6]) {
 			const char* pub = mptr->getPublisher();
 			if (pub != nullptr) {
-				printf("%-*.*s ", ts.COL_WIDTH[6], ts.COL_WIDTH[6], pub);
+				printf("%-*.*s ", ts.COL_WIDTH[6], ts.COL_WIDTH[6], pub); // TODO: Add DIV if I add another column of data
 			} else {
 				printf("%*c ", ts.COL_WIDTH[6], ' ');
 			}
@@ -245,25 +247,22 @@ namespace Command {
 		}
 		MediaType mt = Media::getType(ps.cb.GetLowerToken(1));
 		if (mt == MediaType::UnknownType) {
+			printf("Couldn't determine \"%s\" as a media type!\n", ps.cb.GetToken(1));
+			return;
 		}	
 
 		Media* mptr;
+#define MEDIA_CASE(TYPE) case MediaType::TYPE: mptr = TYPE::usercreated(); break;
 		switch (mt) {
-		case MediaType::Videogame:
-			mptr = Videogame::usercreated();
-			break;
-		case MediaType::Movie:
-			mptr = Movie::usercreated();
-			break;
-		case MediaType::Music:
-			mptr = Music::usercreated();
-			break;
+		MEDIA_CASE(Videogame);
+		MEDIA_CASE(Movie);
+		MEDIA_CASE(Music);
 		default:	
 			printf("Couldn't determine \"%s\" as a media type!\n", ps.cb.GetToken(1));
 			return;
 		}
-		printf("Got pointer: %p\n", mptr);
-		delete mptr; // TODO: Add to vector instead!
+		// printf("Got pointer: %p\n", mptr);
+		ps.medias.push_back(mptr);
 	}
 
 	void Toggle(ProgState& ps) {
@@ -336,10 +335,12 @@ namespace Command {
 			size_t len = strlen(it->first.ptr) + 1 + strlen(it->second.args);
 			if (len > maxlen) maxlen = len;
 		}
-		char cmddef[maxlen+1]; // allow for null terminating char
+
+		const size_t CMAXLEN = maxlen;
+		char cmddef[CMAXLEN+1]; // allow for null terminating char
 		for (auto it = cmd_map.cbegin();it!=cmd_map.cend();++it) {	
-			snprintf(cmddef, maxlen+1, strlen(it->second.args)<1 ? "%s":"%s %s", it->first.ptr, it->second.args);
-			printf("%*s - %s\n", maxlen, cmddef, it->second.help);
+			snprintf(cmddef, CMAXLEN+1, strlen(it->second.args)<1 ? "%s":"%s %s", it->first.ptr, it->second.args);
+			printf("%*s - %s\n", CMAXLEN, cmddef, it->second.help);
 		}
 	}
 };

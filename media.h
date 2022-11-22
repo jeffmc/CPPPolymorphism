@@ -17,6 +17,9 @@ private:
 	char* title; // pointer to title of this media. (Owned by this class)
 	uint year; // year in which media was released
 
+protected:
+	Media(); // default initializer;
+
 public:
 	Media(const_cstr& title, const uint& year); // Construct from values (copies values)
 	Media(const Media& o); // Copy constructor
@@ -32,6 +35,27 @@ public:
 	// Compare two medias "a" and "b" using variable "v".
 	static int cmp(const Var v, const Media* a, const Media* b); 
 
+	// Common media var setting	
+	template <typename T>
+	static T* usercreated(T* ptr) {
+		static const size_t BUFSIZE = 256;
+		char* input = new char[BUFSIZE]; // User-created medias will be incredibly inefficient in heap usage.
+
+		printf("Title: ");
+		CSTR_GETLINE(input,BUFSIZE);
+		ptr->title = input;
+		input = new char[BUFSIZE]; // last buffer now belongs to T instance
+
+		printf("Year: ");
+		CSTR_GETLINE(input,BUFSIZE);
+		unsigned long t = strtoul(input,NULL,0);
+		ptr->year = t;
+
+		delete[] input; // Cleanup
+		return ptr; // TODO: Return nullptr if input is invalid	
+	}
+
+	
 	// These are not virtual functions because every media has title and year.
 	const char* getTitle() const;
 	const uint* getYear() const;

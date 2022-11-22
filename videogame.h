@@ -7,6 +7,7 @@ private:
 	// Videogame specific variables, not contained in base class Media.
 	char* publisher;
 	float rating;
+	Videogame();
 public:
 	// Construct from values
 	Videogame(const_cstr& title, const uint& year,

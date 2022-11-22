@@ -1,5 +1,7 @@
 #include "movie.h"
 
+Movie::Movie() : Media(), director(nullptr) {}
+
 // Construct from values
 Movie::Movie(const_cstr& title, const uint& year,
 	const_cstr& director, const Duration& duration, const float& rating) 
@@ -32,5 +34,23 @@ bool Movie::search(const char* key) const {
 } 
 
 Movie* Movie::usercreated() {
-	return nullptr; // TODO: Implement!
+	Movie* ptr = new Movie;
+	if (!Media::usercreated(ptr)) return nullptr;
+	static const size_t BUFSIZE = 256;
+	char* input = new char[BUFSIZE]; // User-created medias will be incredibly inefficient in heap usage.
+
+	printf("Director: ");
+	CSTR_GETLINE(input, BUFSIZE);
+	ptr->director = input;
+	input = new char[BUFSIZE]; // last alloc now belongs to instance
+
+	printf("Duration:\n");
+	ptr->duration = Duration::usercreated("    ");
+
+	printf("Rating: ");
+	CSTR_GETLINE(input,BUFSIZE);
+	ptr->rating = atof(input);
+	
+	delete[] input;
+	return ptr;
 }
