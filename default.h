@@ -135,7 +135,7 @@ std::vector<Media*> makeDefaultMedias()
 		new Movie("Meet the Robinsons", 2007, "Stephen J. Anderson", Duration(1,35,0),6.8f),
 		new Movie("Catch Me If You Can", 2002, "Steven Spielberg", Duration(2,21,0),8.1f),
 		new Movie("Hoodwinked", 2005, "Cory Edwards", Duration(1,20,0),6.5f),		
-		new Movie("Good Will Hunting", 1997, "Gus Van Sant", Duration(2,6,0),4.3f),
+		new Movie("Good Will Hunting", 1997, "Gus Van Sant", Duration(2,6,0),8.3f),
 		new Movie("The Pursuit of Happyness", 2006, "Gabriele Muccino", Duration(1,57,0),8.0f),
 		new Movie("Hitch", 2005, "Andy Tennant", Duration(1,58,0),6.6f),
 		new Movie("The Intouchables", 2011, "Olivier Nakache", Duration(1,52,0),8.5f),		

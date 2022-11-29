@@ -42,17 +42,6 @@ const char* getMediaTypeStr(const MediaType &mt) { // TODO: Replace this code wi
 }
 #undef CASERET
 
-// print out the column titles filling each column width.
-void printHeader(const TableState& ts) {
-	for (int i=0;i<ts.COL_CT;i++) {
-		if (ts.COL_ENABLED[i]) {
-			printf(ts.COL_LA[i] ? "%-*.*s " : "%*.*s ", 
-				ts.COL_WIDTH[i], ts.COL_WIDTH[i], ts.COL_NAMES[i]);
-		}
-	}
-	printf("\n");
-}
-
 // Comparison between Duration instances.
 int Duration::cmp(const Duration &a, const Duration &b) {
 	int hd = a.hours - b.hours;
@@ -70,6 +59,18 @@ void vecswap(std::vector<T> &v, const size_t a, const size_t b) {
 	v[b] = tmp;	
 };
 
+static const char* const DIV = " | ";
+// print out the column titles filling each column width.
+void printHeader(const TableState& ts) {
+	for (int i=0;i<ts.COL_CT;i++) {
+		if (ts.COL_ENABLED[i]) {
+			printf(ts.COL_LA[i] ? "%-*.*s%s" : "%*.*s%s", 
+				ts.COL_WIDTH[i], ts.COL_WIDTH[i], ts.COL_NAMES[i], DIV);
+		}
+	}
+	printf("\n");
+}
+
 // print a table of medias (doesn't print the header)
 void printMedias(const TableState& ts, const std::vector<Media*> &medias) {
 	for (auto it = medias.cbegin(); it!=medias.cend(); ++it)
@@ -78,13 +79,12 @@ void printMedias(const TableState& ts, const std::vector<Media*> &medias) {
 		MediaType mt = getMediaTypeFromPtr(mptr);
 		const char* mts = getMediaTypeStr(mt);
 
-		static const char* const DIV = " | ";
 
-		#define STR_COL(idx, cptr) if (ts.COL_ENABLED[idx]) printf("%*.*s ", ts.COL_WIDTH[idx], ts.COL_WIDTH[idx], cptr);
+		#define STR_COL(idx, cptr) if (ts.COL_ENABLED[idx]) printf("%*.*s%s", ts.COL_WIDTH[idx], ts.COL_WIDTH[idx], cptr, DIV);
 		STR_COL(0, mts);
 		STR_COL(1, mptr->getTitle());
 		if (ts.COL_ENABLED[2]) {
-			printf("%*u ", ts.COL_WIDTH[2], *(mptr->getYear()));
+			printf("%*u%s", ts.COL_WIDTH[2], *(mptr->getYear()), DIV);
 		}
 		if (ts.COL_ENABLED[3]) {
 			const char* str = mptr->getCreator();
@@ -167,7 +167,6 @@ namespace Command {
 		}	
 		const char* key = ps.cb.GetToken(1);
 		std::vector<Media*> filtered = ps.medias;
-		printf("%u unfiltered size\n", filtered.size());
 		auto iter = std::remove_if(filtered.begin(), filtered.end(), 
 			[key](Media* m) { return !(m->search(key)); });
 		filtered.erase(iter, filtered.end());
@@ -346,7 +345,6 @@ namespace Command {
 };
 
 int main() {
-
 	// Instantiate default TableState, program is running, default CommandBuf, default originals, and blank currents.
 	ProgState ps = { // Since all command functions receive same arguments, this is the single common arg.
 		TableState(), true, CommandBuf(), makeDefaultMedias(), {}
