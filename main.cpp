@@ -22,8 +22,8 @@
 #include "default.h" // default data
 
 // Return which type of derived type of Media this is pointer to using dynamic_cast
-#define TRYRET(PTR, MTYPE) try { MTYPE* tp = dynamic_cast<MTYPE*>(PTR); if (tp!=0) return MediaType::MTYPE; } catch (...) {}
-MediaType getMediaTypeFromPtr(Media* m) {
+#define TRYRET(PTR, MTYPE) try { const MTYPE* tp = dynamic_cast<const MTYPE*>(PTR); if (tp!=0) return MediaType::MTYPE; } catch (...) {}
+MediaType getMediaTypeFromPtr(const Media* m) {
 	TRYRET(m, Videogame);
 	TRYRET(m, Movie);
 	TRYRET(m, Music);
@@ -75,51 +75,55 @@ void printHeader(const TableState& ts) {
 void printMedias(const TableState& ts, const std::vector<Media*> &medias) {
 	for (auto it = medias.cbegin(); it!=medias.cend(); ++it)
 	{	
-		Media* mptr = *it;
-		MediaType mt = getMediaTypeFromPtr(mptr);
-		const char* mts = getMediaTypeStr(mt);
-
-
-		#define STR_COL(idx, cptr) if (ts.COL_ENABLED[idx]) printf("%*.*s%s", ts.COL_WIDTH[idx], ts.COL_WIDTH[idx], cptr, DIV);
-		STR_COL(0, mts);
-		STR_COL(1, mptr->getTitle());
-		if (ts.COL_ENABLED[2]) {
-			printf("%*u%s", ts.COL_WIDTH[2], *(mptr->getYear()), DIV);
-		}
-		if (ts.COL_ENABLED[3]) {
-			const char* str = mptr->getCreator();
-			if (str != nullptr) {
-				printf("%-*.*s%s", ts.COL_WIDTH[3], ts.COL_WIDTH[3], str, DIV);
-			} else {
-				printf("%*c%s", ts.COL_WIDTH[3], ' ', DIV);
-			}
-		}
-		if (ts.COL_ENABLED[4]) {
-			const float* rat = mptr->getRating();
-			if (rat != nullptr) {
-				printf("%*.*f%s", ts.COL_WIDTH[4], 1, *rat, DIV);
-			} else {
-				printf("%*c%s", ts.COL_WIDTH[4], ' ', DIV);
-			}
-		}
-		if (ts.COL_ENABLED[5]) {
-			const Duration* dur = mptr->getDuration();
-			if (dur != nullptr) {
-				printf("%*u:%0*u:%0*u%s", 3, dur->hours, 2, dur->mins, 2, dur->secs, DIV);
-			} else {
-				printf("%*c%s", ts.COL_WIDTH[5], ' ', DIV);
-			}
-		}
-		if (ts.COL_ENABLED[6]) {
-			const char* pub = mptr->getPublisher();
-			if (pub != nullptr) {
-				printf("%-*.*s ", ts.COL_WIDTH[6], ts.COL_WIDTH[6], pub); // TODO: Add DIV if I add another column of data
-			} else {
-				printf("%*c ", ts.COL_WIDTH[6], ' ');
-			}
-		}
-		printf("\n");
+		printMedia(ts, *it);
 	}
+}
+
+void printMedia(const TableState& ts, const Media* mptr) {
+	//Media* mptr = *it;
+	MediaType mt = getMediaTypeFromPtr(mptr);
+	const char* mts = getMediaTypeStr(mt);
+
+
+	#define STR_COL(idx, cptr) if (ts.COL_ENABLED[idx]) printf("%*.*s%s", ts.COL_WIDTH[idx], ts.COL_WIDTH[idx], cptr, DIV);
+	STR_COL(0, mts);
+	STR_COL(1, mptr->getTitle());
+	if (ts.COL_ENABLED[2]) {
+		printf("%*u%s", ts.COL_WIDTH[2], *(mptr->getYear()), DIV);
+	}
+	if (ts.COL_ENABLED[3]) {
+		const char* str = mptr->getCreator();
+		if (str != nullptr) {
+			printf("%-*.*s%s", ts.COL_WIDTH[3], ts.COL_WIDTH[3], str, DIV);
+		} else {
+			printf("%*c%s", ts.COL_WIDTH[3], ' ', DIV);
+		}
+	}
+	if (ts.COL_ENABLED[4]) {
+		const float* rat = mptr->getRating();
+		if (rat != nullptr) {
+			printf("%*.*f%s", ts.COL_WIDTH[4], 1, *rat, DIV);
+		} else {
+			printf("%*c%s", ts.COL_WIDTH[4], ' ', DIV);
+		}
+	}
+	if (ts.COL_ENABLED[5]) {
+		const Duration* dur = mptr->getDuration();
+		if (dur != nullptr) {
+			printf("%*u:%0*u:%0*u%s", 3, dur->hours, 2, dur->mins, 2, dur->secs, DIV);
+		} else {
+			printf("%*c%s", ts.COL_WIDTH[5], ' ', DIV);
+		}
+	}
+	if (ts.COL_ENABLED[6]) {
+		const char* pub = mptr->getPublisher();
+		if (pub != nullptr) {
+			printf("%-*.*s%s", ts.COL_WIDTH[6], ts.COL_WIDTH[6], pub, DIV); // TODO: Add DIV if I add another column of data
+		} else {
+			printf("%*c%s", ts.COL_WIDTH[6], ' ', DIV);
+		}
+	}
+	printf("\n");	
 }
 
 namespace Command {
@@ -175,32 +179,33 @@ namespace Command {
 		printf("Searching for \"%s\" returned %u results\n", key, filtered.size());
 	}
 
-	// Deallocate the media instances within the vector when
-	#define DEALLOCANDERASE(conditional) for (auto it = ps.medias.begin();it != ps.medias.end();) { \
-				if (conditional){delete(*it);ps.medias.erase(it);}else{++it;}}		
+	// Deallocate and remove from vector any media that matches the given query.
 	void Delete(ProgState& ps) {
-		static const char* const CSVMEDIATYPES = "videogame, movie, music"; // Create this dynamically 
+		static const char* const CSVMEDIATYPES = "videogame, movie, music"; // TODO: Create this cstring programmatically 
 		if (ps.cb.Tokens() < 2) {
 			printf("Expected a mode: \"delete [*/search/type] [...]\"\n");
 			return;
 		}
+		
+		std::vector<size_t> cutting_block = {}; // index of medias that match given deletion query.
 		const char* var = ps.cb.GetLowerToken(1);
 		if (strcmp(var,"*")==0) {
 			if (ps.cb.Tokens() != 2) {
 				printf("Wildcard doesn't allow additional arguments!\n");
 				return;
 			}
-			ps.medias.clear();
-			printf("All medias deleted!\n", ps.medias.size());
+			for (size_t i=0;i<ps.medias.size();i++) cutting_block.push_back(i);
 		} else if (strcmp(var,"search")==0) {
-			if (ps.cb.Tokens() < 3) {
-				printf("Expected a search key: \"delete search [key]\"\n");
+			if (ps.cb.Tokens() != 3) {
+				printf("Expected a single-word search key: \"delete search [key]\"\n");
 				return;
 			}
 			const char* key = ps.cb.GetToken(2);
-			DEALLOCANDERASE((*it)->search(key));
+			for (size_t i=0;i<ps.medias.size();i++) {
+				if (ps.medias.at(i)->search(key)) cutting_block.push_back(i);
+			}
 		} else if (strcmp(var,"type")==0) {
-			if (ps.cb.Tokens() < 3) {
+			if (ps.cb.Tokens() != 3) {
 				printf("Expected a type: \"delete search [type]\" (%s)\n", CSVMEDIATYPES);
 				return;
 			}
@@ -210,12 +215,48 @@ namespace Command {
 				printf("\"%s\" is not a valid media type!\n", typestr);
 				return;
 			}
-			DEALLOCANDERASE(getMediaTypeFromPtr(*it) == type);
+			for (size_t i=0;i<ps.medias.size();i++) {
+				if (getMediaTypeFromPtr(ps.medias.at(i)) == type) cutting_block.push_back(i);
+			}
 		} else {
 			printf("\"%s\" not a valid filter variable! (search, type)\n", var);
 			return;
 		}
-		// TODO: Add a confirmation prompt (y/n)
+
+		printHeader(ps.ts);
+		for (auto it = cutting_block.cbegin();it!=cutting_block.cend();it++) {
+			printMedia(ps.ts, ps.medias.at(*it));	
+		}
+
+		const size_t BUFSIZE = 16;
+		char response[BUFSIZE];
+		bool trying = true, deleteEntries = false;
+		while (trying) {
+			printf("Confirm deletion of %u entries above? (y/n)", cutting_block.size());
+			CSTR_GETLINE(response,BUFSIZE);
+			char* ptr = response;
+			while (*ptr) { *ptr = tolower(*ptr); ++ptr; }
+			if (strcmp(response,"y")==0) {
+				deleteEntries = true;
+				trying = false;
+			} else if (strcmp(response,"n")==0) {
+				deleteEntries = false;
+				trying = false;
+			} else {
+				printf("Invalid response!\n");
+				trying = true;
+			}
+		}
+		if (deleteEntries) {
+			// reverse iterator so that indices are not affect as deletions are made.
+			for (auto crit=cutting_block.crbegin();crit!=cutting_block.crend();++crit) {
+				delete ps.medias.at(*crit);
+				ps.medias.erase(ps.medias.begin() + *crit);
+			}
+		} else {
+			printf("Did not delete any media\n");
+		}
+
 		printf("%u medias remaining\n", ps.medias.size());
 	}
 

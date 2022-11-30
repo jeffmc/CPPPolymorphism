@@ -10,7 +10,7 @@
 
 int main(); // Entry point
 
-MediaType getMediaTypeFromPtr(Media* m); // Return MediaType enum val for given Media pointer.
+MediaType getMediaTypeFromPtr(const Media* m); // Return MediaType enum val for given Media pointer.
 const char* getMediaTypeStr(const MediaType &mt); // Return a cstring label for given MediaType.
 
 // Store the width of columns, whether columns are visible,
@@ -38,6 +38,7 @@ void vecswap(std::vector<T> &v, const size_t a, const size_t b);
 
 // print a table of medias (doesn't print the header)
 void printMedias(const TableState& ts, const std::vector<Media*> &medias);
+void printMedia(const TableState& ts, const Media* mptr);
 
 // ProgState is passed to each of the command functions, it contains the media vector, 
 // the original media vector, the tablestate, and the running boolean (affected by quit command).
